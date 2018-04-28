@@ -6,7 +6,7 @@
 using namespace std;
 
 
-OSC::OSC() {
+OSC::OSC(std::function<void(tosc_message*)> callback) {
     fcntl(fd, F_SETFL, O_NONBLOCK); // set the socket to non-blocking
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
@@ -14,11 +14,8 @@ OSC::OSC() {
     sin.sin_addr.s_addr = INADDR_ANY;
     bind(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
     printf("tinyosc is now listening on port 4368.\n");
-};
-
-void OSC::setCallback(std::function<void(tosc_message*)> callback) {
     oscCallback = callback;
-}
+};
 
 void OSC::oscListen() {
     fd_set readSet;

@@ -18,8 +18,7 @@ class OSC {
     std::function<void(tosc_message*)> oscCallback;
 
 public:
-    OSC();
-    void setCallback(std::function<void(tosc_message*)> oscCallback);
+    OSC(std::function<void(tosc_message*)> oscCallback);
     void oscListen();
     void closeSocket();
 };
