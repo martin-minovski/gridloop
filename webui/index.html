@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width; initial-scale=2.0; maximum-scale=2.0; user-scalable=false;">
+    <meta charset="utf-8">
+    <title>NexusUI</title>
+</head>
+
+<body>
+    <div id="piano"></div>
+</body>
+
+<script src="jquery.js"></script>
+<script src="socket.io/socket.io.js"></script>
+<script src="nexusUI.js"></script>
+<script>
+
+var socket = io('/');
+
+var piano = new Nexus.Piano('#piano', {
+    'size': [300, 125],
+    'mode': 'button',  // 'button', 'toggle', or 'impulse'
+    'lowNote': 48,
+    'highNote': 73
+});
+
+piano.on('change',function(data) {
+    console.log(data);
+    socket.emit('piano', {
+        note: data.note,
+        state: data.state
+    });
+});
+
+document.body.addEventListener('touchmove', function(event) {
+    event.preventDefault();
+}, false);
+</script>
+
+<style>
+    body {
+        /* Disables pull-to-refresh but allows overscroll glow effects. */
+        overscroll-behavior-y: contain;
+    }
+</style>
+
+</html>
