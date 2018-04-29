@@ -49,6 +49,7 @@ public:
     Vocoder();
     float processSample(float &sample);
     void processFrequencyDomain(kiss_fft_cpx* cpx);
+    void setBetaFactor(float newBetaFactor);
 
 };
 

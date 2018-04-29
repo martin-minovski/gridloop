@@ -172,5 +172,8 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
         cpx[n].i = nextShifted[n].complex.i;
         cpx[n].r = nextShifted[n].complex.r;
     }
+}
 
+void Vocoder::setBetaFactor(float newBetaFactor) {
+    gBetaFactor = newBetaFactor;
 }

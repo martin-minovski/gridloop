@@ -2,17 +2,69 @@
 <html>
 
 <head>
-    <meta name="viewport" content="width=device-width; initial-scale=2.0; maximum-scale=2.0; user-scalable=false;">
+    <meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=2.0, user-scalable=false">
     <meta charset="utf-8">
     <title>NexusUI</title>
+
+    <style>
+        * {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #888;
+        }
+
+        .grid-item {
+            float: left;
+        }
+        .grid-item-padded {
+            padding: 20px;
+            margin: 20px;
+            border: 2px solid hsla(0, 0%, 0%, 0.1);
+            border-radius: 20px;
+        }
+        .grid-item-padded-sm {
+            padding: 5px;
+            margin: 5px;
+            border: 1px solid hsla(0, 0%, 0%, 0.1);
+            border-radius: 4px;
+        }
+        .title {
+            position: relative;
+        }
+        .title>div {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            -webkit-transform: translateX(-50%);
+            top: -15px;
+            font-size: 14px;
+            font-weight: 100;
+        }
+    </style>
 </head>
 
 <body>
-    <div id="piano"></div>
+    <div class="grid">
+        <div class="grid-item grid-item-padded zoomTarget" style="width: 300px; height: 125px;">
+            <div class="title"><div>Piano</div></div>
+            <div id="piano"></div>
+        </div>
+        <div class="grid-item grid-item-padded zoomTarget" style="width: 300px; height: 125px;">
+            <div class="title"><div>Looper tracks</div></div>
+            <div slider="gain" meta="1" sizeX="30" sizeY="125"></div>
+        </div>
+    </div>
 </body>
 
 <script src="jquery.js"></script>
+<script src="zoomooz.js"></script>
 <script src="socket.io/socket.io.js"></script>
+<script src="masonry.js"></script>
+<script>
+    function getCurrentScale() {
+        var body = document.querySelector('body');
+        return body.getBoundingClientRect().width / body.offsetWidth;
+    }
+</script>
 <script src="nexusUI.js"></script>
 <script>
 
@@ -27,15 +79,84 @@ var piano = new Nexus.Piano('#piano', {
 
 piano.on('change',function(data) {
     console.log(data);
-    socket.emit('piano', {
-        note: data.note,
-        state: data.state
+    socket.emit('ui', {
+        address: 'piano',
+        args: [
+            {
+                type: 'integer',
+                value: data.note
+            },
+            {
+                type: 'integer',
+                value: data.state ? 1 : 0
+            }
+        ]
     });
 });
 
+function makeId() {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for (var i = 0; i < 5; i++)
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+}
+
+$(document).ready(function() {
+
+    $('[slider]').each(function() {
+        var newId = makeId();
+        $(this).attr('id', newId);
+        var sizeX = $(this).attr('sizeX');
+        var sizeY = $(this).attr('sizeY');
+        var min = $(this).attr('min');
+        var max = $(this).attr('max');
+        var step = $(this).attr('step');
+        var value = $(this).attr('value');
+        var meta = $(this).attr('meta');
+
+        var gainSlider = new Nexus.Slider('#' + newId ,{
+            'size': [parseInt(sizeX), parseInt(sizeY)],
+            'mode': 'absolute',  // 'relative' or 'absolute'
+            'min': min ? parseInt(min) : 0,
+            'max': max ? parseInt(max) : 1,
+            'step': step ? parseInt(step) : 0,
+            'value': value ? parseInt(value) : 0
+        });
+
+        gainSlider.on('change',function(val) {
+            socket.emit('ui', {
+                address: 'slider',
+                args: [
+                    {
+                        type: 'string',
+                        value: $(this.parent).attr('slider')
+                    },
+                    {
+                        type: 'float',
+                        value: val
+                    },
+                    {
+                        type: 'integer',
+                        value: meta ? parseInt(meta) : 0
+                    }
+                ]
+            });
+        });
+    });
+
+
+});
+
+
+
+// Prevent unwanted refresh on mobile
 document.body.addEventListener('touchmove', function(event) {
     event.preventDefault();
 }, false);
+
 </script>
 
 <style>

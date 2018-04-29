@@ -56,16 +56,12 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     for (int i = 0; i < nBufferFrames * 2; i++) {
         float tsfSample = sfSynth->getNextSample();
         double inputSample = inBuffer[i];
+        outBuffer[i] = tsfSample + inputSample;
 
-        float fftSample = 0;
-        if (i % 2 == 0) {
-            fftSample = vocoder->processSample(tsfSample);
-        }
-        else {
-            fftSample = tsfSample;
-        }
-
-        outBuffer[i] = fftSample;
+//        float fftSample = 0;
+//        if (i % 2 == 0) fftSample = vocoder->processSample(tsfSample);
+//        else fftSample = tsfSample;
+//        outBuffer[i] = fftSample;
     }
 
     osc->oscListen();
@@ -75,14 +71,21 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 }
 
 void oscCallback(tosc_message* msg) {
+
 //    tosc_printMessage(msg);
 
     string address = tosc_getAddress(msg);
 
     if (address == "slider") {
-        int id = tosc_getNextInt32(msg);
-        float gain = tosc_getNextFloat(msg);
-        sfSynth->setGain(gain);
+        string type = tosc_getNextString(msg);
+        float value = tosc_getNextFloat(msg);
+        if (type == "vocoder") {
+            vocoder->setBetaFactor(value);
+        }
+        if (type == "gain") {
+            sfSynth->setGain(value);
+        }
+
     }
     if (address == "piano") {
         int pitch = tosc_getNextInt32(msg);
@@ -100,10 +103,10 @@ int main() {
 
     // Audio parameters
     unsigned int sampleRate = 44100;
-    unsigned int bufferFrames = 256;
+    unsigned int bufferFrames = 128;
 
 
-    sfSynth = new SFSynth(sampleRate, 2);
+    sfSynth = new SFSynth(sampleRate, bufferFrames);
     looper = new Looper();
     vocoder = new Vocoder();
     osc = new OSC(oscCallback);

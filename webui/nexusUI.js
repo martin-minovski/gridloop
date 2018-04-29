@@ -1258,15 +1258,19 @@
 
             exports.locateMouse = function (e, offset) {
                 return {
-                    x: e.pageX - offset.left,
-                    y: e.pageY - offset.top
+                    x: (e.pageX - offset.left) / getCurrentScale(),
+                    y: (e.pageY - offset.top) / getCurrentScale()
                 };
             };
 
             exports.locateTouch = function (e, offset) {
                 return {
-                    x: e.targetTouches.length ? e.targetTouches[0].pageX - offset.left : false,
-                    y: e.targetTouches.length ? e.targetTouches[0].pageY - offset.top : false
+                    x: e.targetTouches.length ?
+                        (e.targetTouches[0].pageX - offset.left) / getCurrentScale()
+                        : false,
+                    y: e.targetTouches.length ?
+                        (e.targetTouches[0].pageY - offset.top) / getCurrentScale()
+                        : false
                 };
             };
 
@@ -4503,6 +4507,9 @@
                             this.currentElement = false;
 
                             this.element.addEventListener("touchstart", function (e) {
+                                if (!$(e.target).closest('.zoomTarget').hasClass('selectedZoomTarget')) {
+                                    return;
+                                }
                                 console.log("touchstart");
                                 var element = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                                 var key = _this.keys[element.index];
@@ -4514,6 +4521,9 @@
                             });
 
                             this.element.addEventListener("touchmove", function (e) {
+                                if (!$(e.target).closest('.zoomTarget').hasClass('selectedZoomTarget')) {
+                                    return;
+                                }
                                 var element = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                                 var key = _this.keys[element.index];
                                 if (element.index !== _this.currentElement) {
@@ -4531,6 +4541,9 @@
                             });
 
                             this.element.addEventListener("touchend", function (e) {
+                                if (!$(e.target).closest('.zoomTarget').hasClass('selectedZoomTarget')) {
+                                    return;
+                                }
                                 // no touches to calculate because none remaining
                                 // var key = _this.keys[_this.currentElement];
                                 // key.up();
