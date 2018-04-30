@@ -6,26 +6,22 @@
 #define RTPIANO_LOOPER_H
 
 #include <vector>
+#include "LooperClip.h"
 using namespace std;
 
-class Chunk {
-    float* left;
-    float* right;
-};
 
-class Clip {
-    vector<Chunk> chunks;
-public:
-
-};
 
 class Looper {
-    bool isRecording = false;
-
+    LooperClip* recordingClip = nullptr;
+    vector<LooperClip*> clips;
+    int activeChannel = 0;
+    int timer = 0;
 public:
-    void render(double* inputBuffer, double* outputBuffer, int bufferLength);
-    void startRecording();
-    void stopRecording();
+    float process(float sample);
+    void startRec();
+    void stopRec();
+    void setActiveChannel(int channel);
+    void schedule(LooperClip* clip);
 };
 
 

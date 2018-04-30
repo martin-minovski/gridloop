@@ -56,7 +56,8 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     for (int i = 0; i < nBufferFrames * 2; i++) {
         float tsfSample = sfSynth->getNextSample();
         double inputSample = inBuffer[i];
-        outBuffer[i] = tsfSample + inputSample;
+        float looperSample = looper->process((float)inputSample + tsfSample);
+        outBuffer[i] = tsfSample + inputSample + looperSample;
 
 //        float fftSample = 0;
 //        if (i % 2 == 0) fftSample = vocoder->processSample(tsfSample);
@@ -65,7 +66,6 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     }
 
     osc->oscListen();
-    looper->render(inBuffer, outBuffer, nBufferFrames);
 
     return 0;
 }
@@ -85,7 +85,6 @@ void oscCallback(tosc_message* msg) {
         if (type == "gain") {
             sfSynth->setGain(value);
         }
-
     }
     if (address == "piano") {
         int pitch = tosc_getNextInt32(msg);
@@ -95,6 +94,17 @@ void oscCallback(tosc_message* msg) {
         }
         else {
             sfSynth->noteOff(pitch);
+        }
+    }
+    if (address == "rec") {
+        int state = tosc_getNextInt32(msg);
+        if (state == 1) {
+            looper->startRec();
+            cout<<"Recording"<<endl;
+        }
+        else {
+            looper->stopRec();
+            cout<<"Stopped"<<endl;
         }
     }
 }

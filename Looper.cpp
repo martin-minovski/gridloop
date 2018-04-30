@@ -7,18 +7,43 @@
 
 using namespace std;
 
-void Looper::render(double *inputBuffer, double *outputBuffer, int bufferLength) {
-//    cout << "Looper rendering" << endl;
+float Looper::process(float sample) {
+    if (recordingClip) {
+        recordingClip->writeSample(sample);
+    }
+    float finalSample = 0;
+    for (auto clip : clips) {
+        schedule(clip);
+        finalSample += clip->renderVoices();
+    }
+    return finalSample;
 }
-
-void Looper::startRecording() {
-    if (this->isRecording) return;
-    this->isRecording = true;
+void Looper::startRec() {
+    if (recordingClip) return;
+    bool isMaster = clips.empty(); // TODO: Review
+    recordingClip = new LooperClip(activeChannel, isMaster, isMaster ? 0 : timer);
 }
-
-void Looper::stopRecording() {
-    if (this->isRecording) return;
-    this->isRecording = false;
-
-
+void Looper::stopRec() {
+    if (!recordingClip) return;
+    clips.push_back(recordingClip);
+    recordingClip = nullptr;
+}
+void Looper::setActiveChannel(int channel) {
+    activeChannel = channel;
+}
+void Looper::schedule(LooperClip* clip) {
+    if (clip->isMaster()) {
+        if (!clip->isPlaying()) {
+            clip->launch();
+            timer = 0;
+        }
+        else {
+            timer++;
+        }
+    }
+    else {
+        if (!clip->isPlaying() && timer >= clip->getOffset()) {
+            clip->launch();
+        }
+    }
 }

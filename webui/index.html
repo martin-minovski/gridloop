@@ -43,14 +43,19 @@
 </head>
 
 <body>
-    <div class="grid">
-        <div class="grid-item grid-item-padded zoomTarget" style="width: 300px; height: 125px;">
-            <div class="title"><div>Piano</div></div>
-            <div id="piano"></div>
-        </div>
-        <div class="grid-item grid-item-padded zoomTarget" style="width: 300px; height: 125px;">
-            <div class="title"><div>Looper tracks</div></div>
-            <div slider="gain" meta="1" sizeX="30" sizeY="125"></div>
+    <div style="position: fixed; right: 0; padding: 20px;">
+        <div id="looper-rec"></div>
+    </div>
+    <div class="zoomViewport" style="height: 100vh;">
+        <div class="grid zoomContainer">
+            <div class="grid-item grid-item-padded zoomTarget" style="width: 300px; height: 125px;">
+                <div class="title"><div>Piano</div></div>
+                <div id="piano"></div>
+            </div>
+            <div class="grid-item grid-item-padded zoomTarget" style="width: 300px; height: 125px;">
+                <div class="title"><div>Looper tracks</div></div>
+                <div slider="gain" meta="1" sizeX="30" sizeY="125"></div>
+            </div>
         </div>
     </div>
 </body>
@@ -61,7 +66,7 @@
 <script src="masonry.js"></script>
 <script>
     function getCurrentScale() {
-        var body = document.querySelector('body');
+        var body = document.querySelector('.zoomContainer');
         return body.getBoundingClientRect().width / body.offsetWidth;
     }
 </script>
@@ -89,6 +94,24 @@ piano.on('change',function(data) {
             {
                 type: 'integer',
                 value: data.state ? 1 : 0
+            }
+        ]
+    });
+});
+
+var button = new Nexus.Button('#looper-rec',{
+    'size': [80, 80],
+    'mode': 'toggle',  // 'button', 'toggle', or 'impulse'
+    'state': false
+});
+
+button.on('change',function(v) {
+    socket.emit('ui', {
+        address: 'rec',
+        args: [
+            {
+                type: 'integer',
+                value: v ? 1 : 0
             }
         ]
     });
