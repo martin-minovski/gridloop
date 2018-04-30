@@ -42,7 +42,7 @@ void Looper::schedule(LooperClip* clip) {
         }
     }
     else {
-        if (!clip->isPlaying() && timer >= clip->getOffset()) {
+        if (!clip->isPlaying() && timer == clip->getOffset()) {
             clip->launch();
         }
     }

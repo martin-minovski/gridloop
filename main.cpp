@@ -18,7 +18,7 @@ Vocoder* vocoder;
 OSC* osc;
 AudioEngine* audioEngine;
 SFSynth* sfSynth;
-
+bool looperListening = false;
 
 void midiCallback( double deltatime, std::vector< unsigned char > *message, void *userData )
 {
@@ -91,6 +91,10 @@ void oscCallback(tosc_message* msg) {
         int state = tosc_getNextInt32(msg);
         if (state == 1) {
             sfSynth->noteOn(pitch, 100);
+            if (looperListening) {
+                looper->startRec();
+                looperListening = false;
+            }
         }
         else {
             sfSynth->noteOff(pitch);
@@ -99,12 +103,11 @@ void oscCallback(tosc_message* msg) {
     if (address == "rec") {
         int state = tosc_getNextInt32(msg);
         if (state == 1) {
-            looper->startRec();
-            cout<<"Recording"<<endl;
+//            looper->startRec();
+            looperListening = true;
         }
         else {
             looper->stopRec();
-            cout<<"Stopped"<<endl;
         }
     }
 }

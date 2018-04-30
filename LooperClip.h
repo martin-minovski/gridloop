@@ -17,9 +17,10 @@ class LooperClip {
     LooperChunk* firstChunk;
     LooperChunk* lastChunk;
     vector<LooperVoice*> voices;
-    int channel;
-    bool master;
-    int offset;
+    int channel = 0;
+    bool master = false;
+    int offset = 0;
+    int totalSamples = 0;
 public:
     LooperClip(int channel, bool master, int offset);
     void writeSample(float sample);
@@ -30,6 +31,7 @@ public:
     bool isPlaying();
     bool isMaster();
     int getOffset();
+    int getTotalSamples();
 };
 
 #endif //RTPIANO_LOOPERCLIP_H

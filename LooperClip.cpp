@@ -3,6 +3,7 @@
 //
 
 #include "LooperClip.h"
+#include <algorithm>
 
 LooperClip::LooperClip(int channel, bool master, int offset) {
     firstChunk = new LooperChunk();
@@ -19,6 +20,7 @@ void LooperClip::writeSample(float sample) {
         lastChunk = newChunk;
     }
     lastChunk->writeSample(sample);
+    totalSamples++;
 }
 void LooperClip::launch() {
     voices.emplace_back(new LooperVoice(this));
@@ -32,19 +34,23 @@ bool LooperClip::isLastChunk(LooperChunk* chunk) {
 float LooperClip::renderVoices() {
     float result = 0;
     for (auto voice : voices) {
-        result += voice->getNextSample();
+        if (voice->finished()) {
+            voices.erase(std::remove(voices.begin(), voices.end(), voice), voices.end());
+            delete voice;
+        }
+        else result += voice->getNextSample();
     }
     return result;
 }
 bool LooperClip::isPlaying() {
-    for (auto voice : voices) {
-        if (!voice->finished()) return true;
-    }
-    return false;
+    return !voices.empty();
 }
 bool LooperClip::isMaster() {
     return master;
 }
 int LooperClip::getOffset() {
     return offset;
+}
+int LooperClip::getTotalSamples() {
+    return totalSamples;
 }
