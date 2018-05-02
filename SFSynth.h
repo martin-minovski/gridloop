@@ -6,7 +6,6 @@
 
 #define RTPIANO_SFSYNTH_H
 
-
 class SFSynth {
     long long tsfPtr;
     float buffer[4096];
@@ -18,13 +17,14 @@ class SFSynth {
     float gain = 0.5;
 public:
     SFSynth(unsigned int sampleRate, unsigned int bufferSize);
-    void setPreset(int preset);
+    void setPreset(int bank, int preset);
     void noteOn(int pitch, int velocity);
     void noteOff(int pitch);
     void sustainOn();
     void sustainOff();
     void setGain(float gain);
     float getNextSample();
+    void panic();
 };
 
 #endif //RTPIANO_SFSYNTH_H

@@ -56,8 +56,8 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     for (int i = 0; i < nBufferFrames * 2; i++) {
         float tsfSample = sfSynth->getNextSample();
         double inputSample = inBuffer[i];
-        float looperSample = looper->process((float)inputSample + tsfSample);
-        outBuffer[i] = tsfSample + inputSample + looperSample;
+        float looperSample = looper->process(tsfSample);
+        outBuffer[i] = tsfSample + looperSample;
 
 //        float fftSample = 0;
 //        if (i % 2 == 0) fftSample = vocoder->processSample(tsfSample);
@@ -79,25 +79,30 @@ void oscCallback(tosc_message* msg) {
     if (address == "slider") {
         string type = tosc_getNextString(msg);
         float value = tosc_getNextFloat(msg);
+        int meta = tosc_getNextInt32(msg);
         if (type == "vocoder") {
             vocoder->setBetaFactor(value);
         }
-        if (type == "gain") {
+        if (type == "sfgain") {
             sfSynth->setGain(value);
+        }
+        if (type == "channelvolume") {
+            looper->setChannelVolume(meta, value);
         }
     }
     if (address == "piano") {
         int pitch = tosc_getNextInt32(msg);
         int state = tosc_getNextInt32(msg);
+        int octaveShift = tosc_getNextInt32(msg);
         if (state == 1) {
-            sfSynth->noteOn(pitch, 100);
+            sfSynth->noteOn(pitch + octaveShift * 12, 100);
             if (looperListening) {
                 looper->startRec();
                 looperListening = false;
             }
         }
         else {
-            sfSynth->noteOff(pitch);
+            sfSynth->noteOff(pitch + octaveShift * 12);
         }
     }
     if (address == "rec") {
@@ -107,8 +112,23 @@ void oscCallback(tosc_message* msg) {
             looperListening = true;
         }
         else {
+            looperListening = false;
             looper->stopRec();
         }
+    }
+    if (address == "instrument") {
+        int bank = tosc_getNextInt32(msg);
+        int instrument = tosc_getNextInt32(msg);
+        sfSynth->setPreset(bank, instrument);
+    }
+    if (address == "looperchannel") {
+        int chNum = tosc_getNextInt32(msg);
+        looper->setActiveChannel(chNum);
+    }
+    if (address == "solochannel") {
+        int chNum = tosc_getNextInt32(msg);
+        bool solo = tosc_getNextInt32(msg) == 1;
+        looper->setChannelSolo(chNum, solo);
     }
 }
 
@@ -119,7 +139,7 @@ int main() {
     unsigned int bufferFrames = 128;
 
 
-    sfSynth = new SFSynth(sampleRate, bufferFrames);
+    sfSynth = new SFSynth(sampleRate * 2, bufferFrames);
     looper = new Looper();
     vocoder = new Vocoder();
     osc = new OSC(oscCallback);

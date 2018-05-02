@@ -54,3 +54,18 @@ int LooperClip::getOffset() {
 int LooperClip::getTotalSamples() {
     return totalSamples;
 }
+void LooperClip::slaveScheduleTick() {
+    scheduleCountdown--;
+}
+bool LooperClip::slaveScheduled() {
+    return scheduleCountdown <= 0;
+}
+void LooperClip::slaveReschedule() {
+    scheduleCountdown = schedulePeriod;
+}
+void LooperClip::setSchedulePeriod(int period) {
+    schedulePeriod = period;
+}
+int LooperClip::getChannel() {
+    return channel;
+}

@@ -21,6 +21,8 @@ class LooperClip {
     bool master = false;
     int offset = 0;
     int totalSamples = 0;
+    int schedulePeriod = 0;
+    int scheduleCountdown = 0;
 public:
     LooperClip(int channel, bool master, int offset);
     void writeSample(float sample);
@@ -32,6 +34,12 @@ public:
     bool isMaster();
     int getOffset();
     int getTotalSamples();
+    // Scheduler methods
+    void setSchedulePeriod(int period);
+    void slaveScheduleTick();
+    bool slaveScheduled();
+    void slaveReschedule();
+    int getChannel();
 };
 
 #endif //RTPIANO_LOOPERCLIP_H

@@ -4,8 +4,9 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=2.0, user-scalable=false">
     <meta charset="utf-8">
-    <title>NexusUI</title>
+    <title>WebLoopStation</title>
 
+    <link rel="stylesheet" href="fontawesome/css/fontawesome-all.css">
     <style>
         * {
             font-family: Arial, Helvetica, sans-serif;
@@ -14,6 +15,8 @@
 
         .grid-item {
             float: left;
+            width: 300px;
+            height: 140px;
         }
         .grid-item-padded {
             padding: 20px;
@@ -39,22 +42,65 @@
             font-size: 14px;
             font-weight: 100;
         }
+        .instr-icon {
+            width: 20px;
+            height: 20px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            display: inline-block;
+            margin: 2px 5px 0 0;
+            cursor: pointer;
+        }
+        .control-icon {
+            display: inline-block;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .fas {
+            color: #555;
+        }
+        #looper-ch,
+        #looper-ch>select {
+            width: 80px !important;
+        }
     </style>
 </head>
 
 <body>
-    <div style="position: fixed; right: 0; padding: 20px;">
+    <div style="position: fixed; left: 0; bottom: 0; padding: 20px;">
+        <div id="looper-ch"></div>
+        <br />
         <div id="looper-rec"></div>
     </div>
     <div class="zoomViewport" style="height: 100vh;">
         <div class="grid zoomContainer">
-            <div class="grid-item grid-item-padded zoomTarget" style="width: 300px; height: 125px;">
-                <div class="title"><div>Piano</div></div>
+            <div class="grid-item grid-item-padded zoomTarget">
+                <div style="position: absolute; margin-top: -15px;">
+                    <div class="instr-icon" bank="0" instrument="0" octaveShift="0" style="background-image: url('icons/piano.svg')"></div>
+                    <div class="instr-icon" bank="0" instrument="32" octaveShift="-2" style="background-image: url('icons/guitar.svg')"></div>
+                    <div class="instr-icon" bank="128" instrument="8" octaveShift="-1" style="background-image: url('icons/drum.svg');"></div>
+                    <div class="instr-icon" bank="0" instrument="13" octaveShift="0" style="background-image: url('icons/xylo.svg');"></div>
+                    <span>
+                        <div style="position: relative; display: inline-block;">
+                            <div style="position: absolute; margin-top: -24px; font-size: 10px; margin-left: 1px;">
+                                OCTAVE
+                            </div>
+                        </div>
+                        <div class="oct-control control-icon" meta="-">
+                            <i class="fas fa-minus"></i>
+                        </div>
+                        <div class="oct-control control-icon" meta="+">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                    </span>
+                </div>
+                <br />
                 <div id="piano"></div>
             </div>
-            <div class="grid-item grid-item-padded zoomTarget" style="width: 300px; height: 125px;">
-                <div class="title"><div>Looper tracks</div></div>
-                <div slider="gain" meta="1" sizeX="30" sizeY="125"></div>
+            <div class="grid-item grid-item-padded zoomTarget">
+                <div class="title"><div style="font-size: 10px;">Looper channels</div></div>
+                <div id="looper-channel-holder"></div>
             </div>
         </div>
     </div>
@@ -73,8 +119,10 @@
 <script src="nexusUI.js"></script>
 <script>
 
-var socket = io('/');
+var looperChannels = 8;
 
+var socket = io('/');
+var octaveShift = 0;
 var piano = new Nexus.Piano('#piano', {
     'size': [300, 125],
     'mode': 'button',  // 'button', 'toggle', or 'impulse'
@@ -94,6 +142,10 @@ piano.on('change',function(data) {
             {
                 type: 'integer',
                 value: data.state ? 1 : 0
+            },
+            {
+                type: 'integer',
+                value: octaveShift
             }
         ]
     });
@@ -129,6 +181,43 @@ function makeId() {
 
 $(document).ready(function() {
 
+    $('.oct-control').click(function() {
+        var meta = $(this).attr('meta');
+        if (meta === '+') {
+            octaveShift++;
+        }
+        if (meta === '-') {
+            octaveShift--;
+        }
+    });
+
+    var chArray = [];
+    for (var i = 0; i < looperChannels; i++) {
+        chArray.push((i+1).toString());
+        var channelArea = $('<div style="display: inline-block"></div>');
+        channelArea.append($('<div slider="channelvolume" meta="' + i + '" sizeX="30" sizeY="115" style="margin-left: 6px;"></div>'));
+        channelArea.append($('<div style="height:5px;position:relative;"><div style="position:absolute;margin-top:12px;margin-left:10px;pointer-events:none;color:#aaa">S</div></div>'));
+        channelArea.append($('<div solochannel="' + i + '"></div>'));
+        $('#looper-channel-holder').append(channelArea);
+    }
+    var chSelect = new Nexus.Select('#looper-ch',{
+        'size': [100,30],
+        'options': chArray
+    });
+    chSelect.on('change',function(data) {
+        var index = data.index;
+        var value = data.value;
+        socket.emit('ui', {
+            address: 'looperchannel',
+            args: [
+                {
+                    type: 'integer',
+                    value: index
+                }
+            ]
+        });
+    });
+
     $('[slider]').each(function() {
         var newId = makeId();
         $(this).attr('id', newId);
@@ -146,7 +235,7 @@ $(document).ready(function() {
             'min': min ? parseInt(min) : 0,
             'max': max ? parseInt(max) : 1,
             'step': step ? parseInt(step) : 0,
-            'value': value ? parseInt(value) : 0
+            'value': value ? parseInt(value) : 1
         });
 
         gainSlider.on('change',function(val) {
@@ -170,7 +259,52 @@ $(document).ready(function() {
         });
     });
 
+    $('[instrument]').each(function() {
+        $(this).click(function() {
+            octaveShift = parseInt($(this).attr('octaveShift'));
+            socket.emit('ui', {
+                address: 'instrument',
+                args: [
+                    {
+                        type: 'integer',
+                        value: parseInt($(this).attr('bank'))
+                    },
+                    {
+                        type: 'integer',
+                        value: parseInt($(this).attr('instrument'))
+                    }
+                ]
+            });
+        });
+    });
 
+    $('[solochannel]').each(function() {
+
+        var soloBtnId = makeId();
+        $(this).attr('id', soloBtnId);
+
+        var soloButton = new Nexus.Button('#' + soloBtnId, {
+            'size': [30, 30],
+            'mode': 'toggle',  // 'button', 'toggle', or 'impulse'
+            'state': false
+        });
+
+        soloButton.on('change',function(v) {
+            socket.emit('ui', {
+                address: 'solochannel',
+                args: [
+                    {
+                        type: 'integer',
+                        value: parseInt($('#' + soloBtnId).attr('solochannel'))
+                    },
+                    {
+                        type: 'integer',
+                        value: v ? 1 : 0
+                    }
+                ]
+            });
+        });
+    });
 });
 
 
