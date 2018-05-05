@@ -55,9 +55,9 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 
     for (int i = 0; i < nBufferFrames * 2; i++) {
         float tsfSample = sfSynth->getNextSample();
-        double inputSample = inBuffer[i];
-        float looperSample = looper->process(tsfSample);
-        outBuffer[i] = tsfSample + looperSample;
+        float inputSample = (float) inBuffer[(i / 2) * 2];
+        float looperSample = looper->process(tsfSample + inputSample);
+        outBuffer[i] = tsfSample + looperSample + inputSample;
 
 //        float fftSample = 0;
 //        if (i % 2 == 0) fftSample = vocoder->processSample(tsfSample);
@@ -107,9 +107,13 @@ void oscCallback(tosc_message* msg) {
     }
     if (address == "rec") {
         int state = tosc_getNextInt32(msg);
+        int directRec = tosc_getNextInt32(msg);
         if (state == 1) {
-//            looper->startRec();
-            looperListening = true;
+            if (directRec == 1) {
+                looperListening = false;
+                looper->startRec();
+            }
+            else looperListening = true;
         }
         else {
             looperListening = false;

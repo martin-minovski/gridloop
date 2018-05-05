@@ -75,7 +75,7 @@
     </div>
     <div class="zoomViewport" style="height: 100vh;">
         <div class="grid zoomContainer">
-            <div class="grid-item grid-item-padded zoomTarget">
+            <div class="grid-item grid-item-padded zoomTarget" id="pianoZoomTarget">
                 <div style="position: absolute; margin-top: -15px;">
                     <div class="instr-icon" bank="0" instrument="0" octaveShift="0" style="background-image: url('icons/piano.svg')"></div>
                     <div class="instr-icon" bank="0" instrument="32" octaveShift="-2" style="background-image: url('icons/guitar.svg')"></div>
@@ -99,7 +99,7 @@
                 <div id="piano"></div>
             </div>
             <div class="grid-item grid-item-padded zoomTarget">
-                <div class="title"><div style="font-size: 10px;">Looper channels</div></div>
+                <div class="title"><div style="font-size: 10px;">Channel levels</div></div>
                 <div id="looper-channel-holder"></div>
             </div>
         </div>
@@ -151,19 +151,24 @@ piano.on('change',function(data) {
     });
 });
 
-var button = new Nexus.Button('#looper-rec',{
+var recButton = new Nexus.Button('#looper-rec',{
     'size': [80, 80],
     'mode': 'toggle',  // 'button', 'toggle', or 'impulse'
     'state': false
 });
 
-button.on('change',function(v) {
+recButton.on('change',function(v) {
+    var recDirect = !$('#pianoZoomTarget').hasClass('selectedZoomTarget');
     socket.emit('ui', {
         address: 'rec',
         args: [
             {
                 type: 'integer',
                 value: v ? 1 : 0
+            },
+            {
+                type: 'integer',
+                value: recDirect ? 1 : 0
             }
         ]
     });
@@ -196,7 +201,7 @@ $(document).ready(function() {
         chArray.push((i+1).toString());
         var channelArea = $('<div style="display: inline-block"></div>');
         channelArea.append($('<div slider="channelvolume" meta="' + i + '" sizeX="30" sizeY="115" style="margin-left: 6px;"></div>'));
-        channelArea.append($('<div style="height:5px;position:relative;"><div style="position:absolute;margin-top:12px;margin-left:10px;pointer-events:none;color:#aaa">S</div></div>'));
+        channelArea.append($('<div style="height:5px;position:relative;"><div style="position:absolute;margin-top:12px;margin-left:10px;pointer-events:none;color:#bbb">S</div></div>'));
         channelArea.append($('<div solochannel="' + i + '"></div>'));
         $('#looper-channel-holder').append(channelArea);
     }

@@ -10,7 +10,7 @@
 #include "LooperChannel.h"
 using namespace std;
 
-#define NUMBER_OF_CHANNELS 8
+#define NUMBER_OF_LOOPER_CHANNELS 3
 
 class Looper {
     LooperClip* recordingClip = nullptr;
@@ -18,8 +18,8 @@ class Looper {
     vector<LooperClip*> clips;
     int timer = 0;
     int activeChannel = 0;
-    LooperChannel* channels[NUMBER_OF_CHANNELS];
-    int numChannels = NUMBER_OF_CHANNELS;
+    LooperChannel* channels[NUMBER_OF_LOOPER_CHANNELS];
+    int numChannels = NUMBER_OF_LOOPER_CHANNELS;
 public:
     Looper();
     float process(float sample);
