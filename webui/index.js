@@ -1,36 +1,41 @@
+/**
+ * Websockets / OSC glue program
+ * Created by Martin on 4/28/18.
+ */
 
 
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);
 
+var HTTP_PORT = 3000;
 
-// start web server
-http.listen(3000, function(){
-	console.log('webpage active at URL 0.0.0.0:'+3000);
+// Start the web server
+
+http.listen(HTTP_PORT, function(){
+	console.log('Webpage active at URL localhost:' + HTTP_PORT);
 });
 app.use(express.static('./'));
 
-
-// setup OSC
-var osc = require('osc-min');
-var dgram = require('dgram');
-var OSC_SEND_PORT = 4368;
-var udp = dgram.createSocket('udp4');
-// open websocket
+// Open websocket
 var io = require('socket.io')(http);
 sockets = io.of('/');
 
-// listen for websocket events
+// Listen for websocket events
 sockets.on('connection', function(socket){
-	
-	console.log('websocket connected!');
-
-	socket.on('ui', data => {
-		sendOSC(data);
+    console.log('Websocket connected!');
+    socket.on('ui', data => {
+        sendOSC(data);
     });
-	
 });
+
+/**
+ * Setup Node -> C++ OSC comms
+  */
+var OSC_SEND_PORT = 4368;
+var osc = require('osc-min');
+var dgram = require('dgram');
+var udp = dgram.createSocket('udp4');
 
 function sendOSC(message){
 	var buffer = osc.toBuffer(message);
@@ -38,3 +43,20 @@ function sendOSC(message){
 		if (err) console.log(err);
 	});
 }
+
+/**
+ * Setup C++ -> node OSC comms
+ */
+var OSC_RECEIVE_PORT = 10295;
+var udpInbound = dgram.createSocket('udp4');
+udpInbound.bind(OSC_RECEIVE_PORT);
+
+udpInbound.on('listening', function() {
+    var address = udpInbound.address();
+    console.log("Listening on: " + address.address + ":" + address.port);
+});
+
+udpInbound.on('message', function (data) {
+    var oscMsg = osc.fromBuffer(data);
+    sockets.emit('cppinput', oscMsg);
+});

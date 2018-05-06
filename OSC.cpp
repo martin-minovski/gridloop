@@ -5,8 +5,18 @@
 #include "OSC.h"
 using namespace std;
 
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/uio.h>
+
 
 OSC::OSC(std::function<void(tosc_message*)> callback) {
+
+    //Set up inbound socket
     fcntl(fd, F_SETFL, O_NONBLOCK); // set the socket to non-blocking
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
@@ -15,7 +25,29 @@ OSC::OSC(std::function<void(tosc_message*)> callback) {
     bind(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
     printf("tinyosc is now listening on port 4368.\n");
     oscCallback = callback;
-};
+
+    // Set up outbound socket
+    const char* hostnameOut = "127.0.0.1";
+    const char* portnameOut = "10295";
+    struct addrinfo hints;
+    memset(&hints,0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = 0;
+    hints.ai_flags = AI_ADDRCONFIG;
+    int err = getaddrinfo(hostnameOut, portnameOut, &hints, &addInfoOut);
+    if (err != 0) {
+        printf("Failed to resolve remote socket address. (err:%d)\n", err);
+        return;
+    }
+    // Open socket
+    fdOut = socket(addInfoOut->ai_family, addInfoOut->ai_socktype, addInfoOut->ai_protocol);
+    if (fdOut == -1) {
+        printf("Error: %s\n", strerror(errno));
+        return;
+    }
+
+}
 
 void OSC::oscListen() {
     fd_set readSet;
@@ -45,6 +77,17 @@ void OSC::oscListen() {
 }
 
 void OSC::closeSocket() {
-    // close the UDP socket
+    // close the UDP sockets
     close(fd);
+    close(fdOut);
+}
+
+void OSC::sendJson(const char* json) {
+    std::cout<<"Sending JSON..."<<endl;
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "json_update",   // the address
+            "s",   // the format; 'f':32-bit float, 's':ascii string, 'i':32-bit integer
+            json);
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
 }

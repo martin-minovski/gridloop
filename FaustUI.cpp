@@ -5,9 +5,17 @@
 #include "FaustUI.h"
 using namespace std;
 
-FaustUI::FaustUI() {
-    newWidget = new LooperWidget();
+void FaustUI::setLooperChannel(int ch) {
+    looperChannel = ch;
 }
+std::vector<LooperWidget*>* FaustUI::getWidgets() {
+    return &widgets;
+}
+void FaustUI::initializeNewWidget() {
+    newWidget = new LooperWidget(looperChannel);
+}
+
+FaustUI::FaustUI() = default;
 
 void FaustUI::declare(float * zone, const char * key, const char * val) {
     if (strcmp(key, "axis") == 0) {
@@ -28,7 +36,7 @@ void FaustUI::addHorizontalSlider(const char *label,
     widgets.push_back(newWidget);
     newWidget->printData();
     // Prepare for the next new widget.
-    newWidget = new LooperWidget();
+    initializeNewWidget();
 }
 
 void FaustUI::addButton(const char *label, FAUSTFLOAT *zone) {

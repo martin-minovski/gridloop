@@ -9,6 +9,9 @@
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
+#include "json.hpp"
+using json = nlohmann::json;
+
 using namespace std;
 
 class LooperWidget {
@@ -22,14 +25,15 @@ class LooperWidget {
     // NexusUI params
     int axis = 0;
     char* type;
+    int looperChannel = 0;
 
 public:
-    LooperWidget();
+    LooperWidget(int channel);
     void setParams(const char* name, float* zone, float min, float max, float step);
     void setType(const char* type);
     void setAxis(const char* axis);
-    float* getZone();
     void printData();
+    json getJson();
 };
 
 

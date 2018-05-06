@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include "tinyosc.h"
 #include <functional>
+#include <iostream>
 using namespace std;
 
 class OSC {
@@ -17,10 +18,15 @@ class OSC {
     char buffer[2048]; // declare a 2Kb buffer to read packet data into
     std::function<void(tosc_message*)> oscCallback;
 
+    int fdOut;
+    struct addrinfo* addInfoOut = 0;
+    char bufferOut[8192];
+
 public:
     OSC(std::function<void(tosc_message*)> oscCallback);
     void oscListen();
     void closeSocket();
+    void sendJson(const char* json);
 };
 
 

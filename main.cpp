@@ -56,6 +56,7 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     for (int i = 0; i < nBufferFrames * 2; i++) {
         float tsfSample = sfSynth->getNextSample();
         float inputSample = (float) inBuffer[(i / 2) * 2];
+        inputSample = 0; // disable for now.
         float looperSample = looper->process(tsfSample + inputSample);
         outBuffer[i] = tsfSample + looperSample + inputSample;
 
@@ -133,6 +134,9 @@ void oscCallback(tosc_message* msg) {
         int chNum = tosc_getNextInt32(msg);
         bool solo = tosc_getNextInt32(msg) == 1;
         looper->setChannelSolo(chNum, solo);
+    }
+    if (address == "ping") {
+        osc->sendJson(looper->getWidgetJSON().c_str());
     }
 }
 

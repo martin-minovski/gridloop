@@ -5,6 +5,9 @@
 #include <iostream>
 #include "Looper.h"
 #include <cmath>
+#include "LooperWidget.h"
+#include "json.hpp"
+using json = nlohmann::json;
 
 using namespace std;
 
@@ -85,4 +88,14 @@ void Looper::setChannelSolo(int ch, bool solo) {
 }
 void Looper::setChannelVolume(int ch, float volume) {
     channels[ch]->setVolume(volume);
+}
+string Looper::getWidgetJSON() {
+    json result;
+    for (int i = 0; i < numChannels; i++) {
+        std::vector<LooperWidget*>* widgets = channels[i]->getWidgets();
+        for (auto widget : (*widgets)) {
+            result.push_back(widget->getJson());
+        }
+    }
+    return result.dump();
 }

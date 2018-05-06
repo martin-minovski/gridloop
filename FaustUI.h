@@ -12,10 +12,13 @@
 class FaustUI : public UI {
     std::vector<LooperWidget*> widgets;
     LooperWidget* newWidget;
+    int looperChannel = 0;
 
 public:
 
-    LooperWidget* getWidgetByZone(float* zone);
+    void setLooperChannel(int ch);
+    std::vector<LooperWidget*>* getWidgets();
+    void initializeNewWidget();
 
     FaustUI();
 

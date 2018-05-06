@@ -8,6 +8,7 @@
 #include <vector>
 #include "LooperClip.h"
 #include "LooperChannel.h"
+#include <string>
 using namespace std;
 
 #define NUMBER_OF_LOOPER_CHANNELS 3
@@ -29,6 +30,7 @@ public:
     void schedule(LooperClip* clip);
     void setChannelSolo(int ch, bool solo);
     void setChannelVolume(int ch, float volume);
+    string getWidgetJSON();
 };
 
 

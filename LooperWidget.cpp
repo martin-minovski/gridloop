@@ -4,9 +4,8 @@
 
 #include "LooperWidget.h"
 
-LooperWidget::LooperWidget() {
-    this->type = strdup("Test");
-    this->axis = 10;
+LooperWidget::LooperWidget(int channel) {
+    this->looperChannel = channel;
 };
 
 void LooperWidget::setParams(const char* name, float* zone, float min, float max, float step) {
@@ -24,9 +23,6 @@ void LooperWidget::setType(const char* type) {
     this->type = strdup(type);
     cout<<"====="<<this->type<<endl;
 }
-float* LooperWidget::getZone() {
-    return zone;
-}
 void LooperWidget::printData() {
     cout<<endl;
     cout<<"=== Widget Data ==="<<endl;
@@ -37,4 +33,20 @@ void LooperWidget::printData() {
     cout<<"Step: "<<step<<endl;
     cout<<"NexusUI type: "<<type<<endl;
     cout<<"NexusUI axis: "<<axis<<endl;
+}
+json LooperWidget::getJson() {
+    std::string nameStr(name);
+    std::string typeStr(type);
+    json result = {
+        {"name", nameStr},
+        {"value", *zone},
+        {"zone", (long)zone},
+        {"min", min},
+        {"max", max},
+        {"step", step},
+        {"axis", axis},
+        {"type", typeStr},
+        {"looperChannel", looperChannel},
+    };
+    return result;
 }

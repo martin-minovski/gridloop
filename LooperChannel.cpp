@@ -6,8 +6,12 @@
 #include <iostream>
 using namespace std;
 
+
+
 LooperChannel::LooperChannel(int id) {
     this->id = id;
+    faustUI.setLooperChannel(id);
+    faustUI.initializeNewWidget();
 
     string error_msg;
     char filepath[16];
@@ -37,4 +41,7 @@ float LooperChannel::process(float sample) {
 }
 void LooperChannel::setVolume(float volume) {
     this->volume = volume;
+}
+std::vector<LooperWidget*>* LooperChannel::getWidgets() {
+    return faustUI.getWidgets();
 }

@@ -24,7 +24,7 @@ class LooperChannel {
     float faustOutL[FAUST_BUFFER_SIZE];
     float faustOutR[FAUST_BUFFER_SIZE];
     int bufferSize = FAUST_BUFFER_SIZE;
-    float leftChannel = true; // ugly hack
+    float leftChannel = true;
     float* faustIn[2] = {faustInL, faustInR};
     float* faustOut[2] = {faustOutL, faustOutR};
 public:
@@ -33,6 +33,7 @@ public:
     LooperChannel(int id);
     float process(float sample);
     void setVolume(float volume);
+    std::vector<LooperWidget*>* getWidgets();
 };
 
 
