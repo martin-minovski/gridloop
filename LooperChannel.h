@@ -9,12 +9,14 @@
 #include "faust/dsp/llvm-dsp.h"
 #include "faust/gui/UI.h"
 #include "FaustUI.h"
+#include "OSC.h"
 
 #define FAUST_BUFFER_SIZE 2
 
 class LooperChannel {
     int id;
     float volume = 1.0f;
+    OSC* osc;
     // Faust
     llvm_dsp_factory* faustFactory;
     dsp* faustDSP;
@@ -30,10 +32,11 @@ class LooperChannel {
 public:
     bool solo = false;
     bool soloMute = false;
-    LooperChannel(int id);
+    LooperChannel(int id, OSC* osc);
     float process(float sample);
     void setVolume(float volume);
     std::vector<LooperWidget*>* getWidgets();
+    bool reloadDSPFile();
 };
 
 

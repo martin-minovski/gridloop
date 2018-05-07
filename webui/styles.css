@@ -1,11 +1,9 @@
 body {
-    /* Disables pull-to-refresh but allows overscroll glow effects. */
-    overscroll-behavior-y: contain;
-}
-
-* {
     font-family: Arial, Helvetica, sans-serif;
     color: #666;
+
+    /* Disables pull-to-refresh but allows overscroll glow effects. */
+    overscroll-behavior-y: contain;
 }
 
 .grid-item-channel {
@@ -63,4 +61,23 @@ body {
 #looper-ch,
 #looper-ch>select {
     width: 80px !important;
+}
+#faust-editor-container {
+    position:fixed;
+    padding:0;
+    margin:0;
+    top:0;
+    left:0;
+    width: 100%;
+    height: 100%;
+    background:rgba(255,255,255,0.8);
+
+    /*Initially hidden*/
+    display: none;
+}
+#faust-editor {
+    height: 80%;
+    width: 100%;
+    background:rgba(255,255,255,0.5);
+    /*position: absolute;*/
 }

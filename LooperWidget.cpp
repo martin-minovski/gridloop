@@ -19,9 +19,7 @@ void LooperWidget::setAxis(const char* axis) {
     this->axis = *axis - 'x';
 }
 void LooperWidget::setType(const char* type) {
-    cout<<"====="<<type<<endl;
     this->type = strdup(type);
-    cout<<"====="<<this->type<<endl;
 }
 void LooperWidget::printData() {
     cout<<endl;

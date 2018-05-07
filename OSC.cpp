@@ -23,7 +23,7 @@ OSC::OSC(std::function<void(tosc_message*)> callback) {
     sin.sin_port = htons(4368);
     sin.sin_addr.s_addr = INADDR_ANY;
     bind(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
-    printf("tinyosc is now listening on port 4368.\n");
+    printf("Listening for OSC on port 4368.\n");
     oscCallback = callback;
 
     // Set up outbound socket
@@ -75,18 +75,39 @@ void OSC::oscListen() {
         }
     }
 }
-
 void OSC::closeSocket() {
     // close the UDP sockets
     close(fd);
     close(fdOut);
 }
-
 void OSC::sendJson(const char* json) {
     unsigned int len = tosc_writeMessage(
             bufferOut, sizeof(bufferOut),
-            "json_update",   // the address
-            "s",   // the format; 'f':32-bit float, 's':ascii string, 'i':32-bit integer
+            "json_update",
+            "s",
             json);
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}
+void OSC::sendFaustError(const char *errorMsg) {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "faust_error",
+            "s",
+            errorMsg);
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}
+void OSC::sendFaustCode(int channel, const char *code) {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "faust_code",
+            "is",
+            channel, code);
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}
+void OSC::sendFaustAck() {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "faust_ack",
+            "");
     sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
 }

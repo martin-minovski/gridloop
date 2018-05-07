@@ -11,7 +11,7 @@
 </head>
 
 <body>
-    <div style="position: fixed; left: 0; bottom: 0; padding: 20px;">
+    <div style="position: fixed; left: 0; bottom: 0; padding: 20px; z-index: 100000;">
         <div id="looper-ch"></div>
         <br />
         <div id="looper-rec"></div>
@@ -47,8 +47,21 @@
             </div>
         </div>
     </div>
+
+    <div id="faust-editor-container">
+        <h1 style="text-align: center">
+            Editing DSP of channel <span style="font-weight: 600" id="faust-channel-span"></span>
+        </h1>
+        <div style="position:fixed; right: 20px; top: 20px;">
+            <i class="fas fa-check fa-2x" style="cursor: pointer" onclick="faustSave()"></i>
+            &nbsp;&nbsp;&nbsp;
+            <i class="fas fa-times fa-2x" style="cursor: pointer" onclick="faustClose()"></i>
+        </div>
+        <div id="faust-editor"></div>
+    </div>
 </body>
 
+<script src="src/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="jquery.js"></script>
 <script src="zoomooz.js"></script>
 <script src="socket.io/socket.io.js"></script>

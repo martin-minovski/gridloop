@@ -1,5 +1,20 @@
-var LOOPER_CHANNELS = 4;
+var editor = ace.edit("faust-editor");
+editor.setFontSize(20);
+var editingChannel = 0;
+function editDSP(channel) {
+    editingChannel = channel;
+    socket.emit('ui', {
+        address: 'getfaustcode',
+        args: [
+            {
+                type: 'integer',
+                value: channel
+            }
+        ]
+    });
+}
 
+var LOOPER_CHANNELS = 4;
 var looperChannels = LOOPER_CHANNELS;
 var faustWidgets = [];
 var widgetIDs = [];
@@ -9,7 +24,9 @@ for (var i = 0; i < looperChannels; i++) {
 var viewport = $('#mainContainer');
 for (var i = 0; i < looperChannels; i++) {
     viewport.append('<div class="grid-item-channel grid-item-padded zoomTarget">' +
-        '<div class="title"><div style="font-size: 10px;">Channel ' + (i+1) + '</div></div>' +
+        '<div class="title"><div style="font-size: 10px; font-weight: 600">Channel ' + (i+1) + ' ' +
+        '<i class="fa fa-pencil-alt" onclick="editDSP(' + i + ')" style="cursor: pointer"></i>' +
+        '</div></div>' +
         '<div id="widget-container-' + i + '"></div>' +
         '</div>');
 }
@@ -30,8 +47,44 @@ function updateFaustZone(zone, value) {
     });
 }
 
+function faustSave() {
+    var code = editor.getValue();
+    socket.emit('ui', {
+        address: 'writefaustcode',
+        args: [
+            {
+                type: 'integer',
+                value: editingChannel
+            },
+            {
+                type: 'string',
+                value: code
+            }
+        ]
+    });
+}
+
+function faustClose() {
+    $('#faust-editor-container').hide();
+}
+
 var socket = io('/');
 socket.on('cppinput', function (data) {
+    if (data.address === 'faust_ack') {
+        updateAllWidgets();
+        alert("Compiled with no errors!");
+    }
+    if (data.address === 'faust_code') {
+        var channel = data.args[0].value;
+        var code = data.args[1].value;
+        $('#faust-channel-span').html(channel+1);
+        $('#faust-editor-container').show();
+        editor.setValue(code, 1);
+    }
+    if (data.address === 'faust_error') {
+        updateAllWidgets();
+        alert(data.args[0].value);
+    }
     if (data.address === 'json_update') {
 
         var widgets = JSON.parse(data.args[0].value);
@@ -259,15 +312,12 @@ $(document).ready(function() {
     });
 
     // Get widgets
-    socket.emit('ui', {
-        address: 'getwidgets',
-        args: []
-    });
+    updateAllWidgets();
 
     $('.grid').masonry({
         // fitWidth: true
         horizontalOrder: false,
-        columnWidth: 140
+        columnWidth: 1 // ???
     });
 });
 
@@ -276,3 +326,9 @@ document.body.addEventListener('touchmove', function(event) {
     event.preventDefault();
 }, false);
 
+function updateAllWidgets() {
+    socket.emit('ui', {
+        address: 'getwidgets',
+        args: []
+    });
+}

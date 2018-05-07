@@ -10,6 +10,9 @@
 #include "OSC.h"
 #include "AudioEngine.h"
 #include "SFSynth.h"
+#include "FileManager.h"
+
+//#define MIDI_ENABLED
 
 using namespace std;
 
@@ -18,6 +21,8 @@ Vocoder* vocoder;
 OSC* osc;
 AudioEngine* audioEngine;
 SFSynth* sfSynth;
+FileManager* fileManager;
+
 bool looperListening = false;
 
 void midiCallback( double deltatime, std::vector< unsigned char > *message, void *userData )
@@ -144,6 +149,17 @@ void oscCallback(tosc_message* msg) {
         float* zonePtr = (float*)stol(zone);
         *zonePtr = value;
     }
+    else if (address == "getfaustcode") {
+        int channel = tosc_getNextInt32(msg);
+        string code = fileManager->getFaustCode(channel);
+        osc->sendFaustCode(channel, code.c_str());
+    }
+    else if (address == "writefaustcode") {
+        int channel = tosc_getNextInt32(msg);
+        string code = tosc_getNextString(msg);
+        fileManager->writeFaustCode(channel, code);
+        if (looper->reloadChannelDSP(channel)) osc->sendFaustAck();
+    }
 }
 
 int main() {
@@ -154,33 +170,35 @@ int main() {
 
 
     sfSynth = new SFSynth(sampleRate * 2, bufferFrames);
-    looper = new Looper();
-    vocoder = new Vocoder();
     osc = new OSC(oscCallback);
+    looper = new Looper(osc);
+    vocoder = new Vocoder();
+    fileManager = new FileManager();
     audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::UNIX_JACK);
 
 
     // Initialize MIDI listener
+#ifdef MIDI_ENABLED
+    RtMidiIn *midiIn = new RtMidiIn();
+    // Check available ports.
+    unsigned int nPorts = midiIn->getPortCount();
+    if ( nPorts == 0 ) {
+        std::cout << "No ports available!\n";
+    }
+    else {
 
+        std::cout << nPorts << " ports available!\n";
 
-//    RtMidiIn *midiIn = new RtMidiIn();
-//    // Check available ports.
-//    unsigned int nPorts = midiIn->getPortCount();
-//    if ( nPorts == 0 ) {
-//        std::cout << "No ports available!\n";
-//    }
-//    else {
-//
-//        std::cout << nPorts << " ports available!\n";
-//
-//        midiIn->openPort( 1 );
-//        // Set our callback function.  This should be done immediately after
-//        // opening the port to avoid having incoming messages written to the
-//        // queue.
-//        midiIn->setCallback( &midiCallback );
-//        // Ignore sysex, timing, or active sensing messages:
-//        midiIn->ignoreTypes( true, true, true );
-//    }
+        midiIn->openPort( 1 );
+        // Set our callback function.  This should be done immediately after
+        // opening the port to avoid having incoming messages written to the
+        // queue.
+        midiIn->setCallback( &midiCallback );
+        // Ignore sysex, timing, or active sensing messages:
+        midiIn->ignoreTypes( true, true, true );
+    }
+#endif
+
 
     // Quit scenario
 

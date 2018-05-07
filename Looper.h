@@ -9,6 +9,7 @@
 #include "LooperClip.h"
 #include "LooperChannel.h"
 #include <string>
+#include "OSC.h"
 using namespace std;
 
 #define NUMBER_OF_LOOPER_CHANNELS 4
@@ -22,7 +23,7 @@ class Looper {
     LooperChannel* channels[NUMBER_OF_LOOPER_CHANNELS];
     int numChannels = NUMBER_OF_LOOPER_CHANNELS;
 public:
-    Looper();
+    Looper(OSC* osc);
     float process(float sample);
     void startRec();
     void stopRec();
@@ -31,6 +32,7 @@ public:
     void setChannelSolo(int ch, bool solo);
     void setChannelVolume(int ch, float volume);
     string getWidgetJSON();
+    bool reloadChannelDSP(int channel);
 };
 
 

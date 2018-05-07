@@ -11,9 +11,9 @@ using json = nlohmann::json;
 
 using namespace std;
 
-Looper::Looper() {
+Looper::Looper(OSC* osc) {
     for (int i = 0; i < numChannels; i++) {
-        channels[i] = new LooperChannel(i);
+        channels[i] = new LooperChannel(i, osc);
     }
 }
 float Looper::process(float sample) {
@@ -98,4 +98,7 @@ string Looper::getWidgetJSON() {
         }
     }
     return result.dump();
+}
+bool Looper::reloadChannelDSP(int channel) {
+    return channels[channel]->reloadDSPFile();
 }

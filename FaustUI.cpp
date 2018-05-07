@@ -34,7 +34,6 @@ void FaustUI::addHorizontalSlider(const char *label,
                                   FAUSTFLOAT step) {
     newWidget->setParams(label, zone, min, max, step);
     widgets.push_back(newWidget);
-    newWidget->printData();
     // Prepare for the next new widget.
     initializeNewWidget();
 }
