@@ -11,7 +11,7 @@
 #include "FaustUI.h"
 #include "OSC.h"
 
-#define FAUST_BUFFER_SIZE 2
+#define FAUST_BUFFER_SIZE 1
 
 class LooperChannel {
     int id;

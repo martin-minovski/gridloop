@@ -12,7 +12,7 @@
 #include "OSC.h"
 using namespace std;
 
-#define NUMBER_OF_LOOPER_CHANNELS 4
+#define NUMBER_OF_LOOPER_CHANNELS 8
 
 class Looper {
     LooperClip* recordingClip = nullptr;

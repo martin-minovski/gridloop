@@ -4,7 +4,8 @@
 
 #ifndef RTPIANO_OSC_H
 #define RTPIANO_OSC_H
-#define BUFFER_SIZE 8192
+#define IN_BUFFER_SIZE 8192
+#define OUT_BUFFER_SIZE 32768
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -15,12 +16,12 @@ using namespace std;
 
 class OSC {
     const int fd = socket(AF_INET, SOCK_DGRAM, 0);
-    char buffer[BUFFER_SIZE];
+    char buffer[IN_BUFFER_SIZE];
     std::function<void(tosc_message*)> oscCallback;
 
     int fdOut;
     struct addrinfo* addInfoOut = 0;
-    char bufferOut[BUFFER_SIZE];
+    char bufferOut[OUT_BUFFER_SIZE];
 
 public:
     OSC(std::function<void(tosc_message*)> oscCallback);

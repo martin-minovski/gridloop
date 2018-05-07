@@ -10,13 +10,14 @@ using namespace std;
 
 LooperChannel::LooperChannel(int id, OSC* osc) {
     this->id = id;
-    faustUI.setLooperChannel(id);
-    faustUI.initializeNewWidget();
     this->osc = osc;
     faustDSP = nullptr;
     reloadDSPFile();
 }
 bool LooperChannel::reloadDSPFile() {
+    faustUI = FaustUI();
+    faustUI.setLooperChannel(id);
+    faustUI.initializeNewWidget();
     llvm_dsp_factory* newFaustFactory;
     dsp* newFaustDSP;
     string error_msg;

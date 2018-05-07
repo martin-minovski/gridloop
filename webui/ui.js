@@ -14,13 +14,20 @@ function editDSP(channel) {
     });
 }
 
-var LOOPER_CHANNELS = 4;
+var LOOPER_CHANNELS = 8;
 var looperChannels = LOOPER_CHANNELS;
 var faustWidgets = [];
 var widgetIDs = [];
-for (var i = 0; i < looperChannels; i++) {
-    faustWidgets[i] = [];
+
+function initWidgetsArray() {
+    faustWidgets = [];
+    widgetIDs = [];
+    for (var i = 0; i < looperChannels; i++) {
+        faustWidgets[i] = [];
+    }
 }
+initWidgetsArray();
+
 var viewport = $('#mainContainer');
 for (var i = 0; i < looperChannels; i++) {
     viewport.append('<div class="grid-item-channel grid-item-padded zoomTarget">' +
@@ -86,8 +93,9 @@ socket.on('cppinput', function (data) {
         alert(data.args[0].value);
     }
     if (data.address === 'json_update') {
-
-        var widgets = JSON.parse(data.args[0].value);
+        initWidgetsArray();
+        var jsonString = data.args[0].value;
+        var widgets = JSON.parse(jsonString);
         widgets.forEach(function(widget) {
             faustWidgets[widget.looperChannel][widget.name] = [];
         });
@@ -143,7 +151,6 @@ $(document).ready(function() {
     });
 
     piano.on('change',function(data) {
-        console.log(data);
         socket.emit('ui', {
             address: 'piano',
             args: [
