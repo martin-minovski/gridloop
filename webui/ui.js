@@ -1,12 +1,80 @@
+var LOOPER_CHANNELS = 4;
 
-var looperChannels = 8;
+var looperChannels = LOOPER_CHANNELS;
+var faustWidgets = [];
+var widgetIDs = [];
+for (var i = 0; i < looperChannels; i++) {
+    faustWidgets[i] = [];
+}
+var viewport = $('#mainContainer');
+for (var i = 0; i < looperChannels; i++) {
+    viewport.append('<div class="grid-item-channel grid-item-padded zoomTarget">' +
+        '<div class="title"><div style="font-size: 10px;">Channel ' + (i+1) + '</div></div>' +
+        '<div id="widget-container-' + i + '"></div>' +
+        '</div>');
+}
+
+function updateFaustZone(zone, value) {
+    socket.emit('ui', {
+        address: 'updatezone',
+        args: [
+            {
+                type: 'string',
+                value: zone.toString()
+            },
+            {
+                type: 'float',
+                value: value
+            }
+        ]
+    });
+}
 
 var socket = io('/');
-
 socket.on('cppinput', function (data) {
     if (data.address === 'json_update') {
+
         var widgets = JSON.parse(data.args[0].value);
-        console.log(widgets);
+        widgets.forEach(function(widget) {
+            faustWidgets[widget.looperChannel][widget.name] = [];
+        });
+        widgets.forEach(function(widget) {
+            faustWidgets[widget.looperChannel][widget.name][widget.axis] = widget;
+
+        });
+
+        console.log("Widgets array: ", faustWidgets);
+
+        for (var i = 0; i < looperChannels; i++) {
+            var widgetContainer = $('#widget-container-' + i);
+            widgetContainer.html('');
+            for (var j in faustWidgets[i]) {
+                var widget = faustWidgets[i][j];
+                var widgetID = 'widget_' + i + '_' + j.replace(/ /g, "_");
+                widgetIDs['#' + widgetID] = widget;
+
+                var axisX = widget[0];
+                var axisY = widget[0];
+                var axisZ = widget[0];
+
+                var widgetDiv = $('<div style="font-size: 10px;">' + j + '<br /><div class="widget-div" id="' + widgetID + '"></div></div>');
+                widgetContainer.append(widgetDiv);
+                if (axisX.type === 'slider') {
+                    var nexusUiWidget = new Nexus.Slider('#' + widgetID, {
+                        'size': [120,20],
+                        'mode': 'relative',  // 'relative' or 'absolute'
+                        'min': axisX.min,
+                        'max': axisX.max,
+                        'step': axisX.step,
+                        'value': axisX.value
+                    });
+                    nexusUiWidget.on('change',function(value) {
+                        var widget = widgetIDs[this.settings.target];
+                        updateFaustZone(widget[0].zone, value);
+                    })
+                }
+            }
+        }
     }
 });
 
@@ -190,22 +258,16 @@ $(document).ready(function() {
         });
     });
 
-
-    var testBtn = new Nexus.Button('#testbtn',{
-        'size': [80, 80],
-        'mode': 'button',  // 'button', 'toggle', or 'impulse'
-        'state': false
+    // Get widgets
+    socket.emit('ui', {
+        address: 'getwidgets',
+        args: []
     });
-    testBtn.on('change',function(v) {
-        socket.emit('ui', {
-            address: 'ping',
-            args: [
-                {
-                    type: 'integer',
-                    value: 1
-                }
-            ]
-        });
+
+    $('.grid').masonry({
+        // fitWidth: true
+        horizontalOrder: false,
+        columnWidth: 140
     });
 });
 

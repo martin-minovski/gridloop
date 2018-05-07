@@ -83,7 +83,6 @@ void OSC::closeSocket() {
 }
 
 void OSC::sendJson(const char* json) {
-    std::cout<<"Sending JSON..."<<endl;
     unsigned int len = tosc_writeMessage(
             bufferOut, sizeof(bufferOut),
             "json_update",   // the address

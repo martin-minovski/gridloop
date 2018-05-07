@@ -11,7 +11,7 @@
 #include <string>
 using namespace std;
 
-#define NUMBER_OF_LOOPER_CHANNELS 3
+#define NUMBER_OF_LOOPER_CHANNELS 4
 
 class Looper {
     LooperClip* recordingClip = nullptr;

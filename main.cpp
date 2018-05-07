@@ -91,7 +91,7 @@ void oscCallback(tosc_message* msg) {
             looper->setChannelVolume(meta, value);
         }
     }
-    if (address == "piano") {
+    else if (address == "piano") {
         int pitch = tosc_getNextInt32(msg);
         int state = tosc_getNextInt32(msg);
         int octaveShift = tosc_getNextInt32(msg);
@@ -106,7 +106,7 @@ void oscCallback(tosc_message* msg) {
             sfSynth->noteOff(pitch + octaveShift * 12);
         }
     }
-    if (address == "rec") {
+    else if (address == "rec") {
         int state = tosc_getNextInt32(msg);
         int directRec = tosc_getNextInt32(msg);
         if (state == 1) {
@@ -121,22 +121,28 @@ void oscCallback(tosc_message* msg) {
             looper->stopRec();
         }
     }
-    if (address == "instrument") {
+    else if (address == "instrument") {
         int bank = tosc_getNextInt32(msg);
         int instrument = tosc_getNextInt32(msg);
         sfSynth->setPreset(bank, instrument);
     }
-    if (address == "looperchannel") {
+    else if (address == "looperchannel") {
         int chNum = tosc_getNextInt32(msg);
         looper->setActiveChannel(chNum);
     }
-    if (address == "solochannel") {
+    else if (address == "solochannel") {
         int chNum = tosc_getNextInt32(msg);
         bool solo = tosc_getNextInt32(msg) == 1;
         looper->setChannelSolo(chNum, solo);
     }
-    if (address == "ping") {
+    else if (address == "getwidgets") {
         osc->sendJson(looper->getWidgetJSON().c_str());
+    }
+    else if (address == "updatezone") {
+        string zone = tosc_getNextString(msg);
+        float value = tosc_getNextFloat(msg);
+        float* zonePtr = (float*)stol(zone);
+        *zonePtr = value;
     }
 }
 

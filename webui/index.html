@@ -17,7 +17,7 @@
         <div id="looper-rec"></div>
     </div>
     <div class="zoomViewport" style="height: 100vh;">
-        <div class="grid zoomContainer">
+        <div class="grid zoomContainer" id="mainContainer">
             <div class="grid-item grid-item-padded zoomTarget" id="pianoZoomTarget">
                 <div style="position: absolute; margin-top: -15px;">
                     <div class="instr-icon" bank="0" instrument="0" octaveShift="0" style="background-image: url('icons/piano.svg')"></div>
@@ -45,8 +45,6 @@
                 <div class="title"><div style="font-size: 10px;">Channel levels</div></div>
                 <div id="looper-channel-holder"></div>
             </div>
-            <div class="grid-item grid-item-padded zoomTarget" style="width: 680px; height: 280px;">
-            </div>
         </div>
     </div>
 </body>
@@ -58,9 +56,5 @@
 <script src="nexusUI.js"></script>
 <script src="helpers.js"></script>
 <script src="ui.js"></script>
-
-<div style="position: fixed; bottom: 20px; right: 20px;" id="widget-holder">
-    <div id="testbtn"></div>
-</div>
 
 </html>
