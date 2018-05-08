@@ -111,19 +111,22 @@ socket.on('cppinput', function (data) {
             widgetContainer.html('');
             for (var j in faustWidgets[i]) {
                 var widget = faustWidgets[i][j];
-                var widgetID = 'widget_' + i + '_' + j.replace(/ /g, "_");
+                var idSafeName = j.replace(/ /g, "_").replace(/"/g, "").replace(/'/g, "").replace(/\(|\)/g, "");
+                var widgetID = 'widget_' + i + '_' + idSafeName;
                 widgetIDs['#' + widgetID] = widget;
 
                 var axisX = widget[0];
-                var axisY = widget[0];
-                var axisZ = widget[0];
+                var axisY = widget[1];
+                var axisZ = widget[2];
 
                 var widgetDiv = $('<div style="font-size: 10px;">' + j + '<br /><div class="widget-div" id="' + widgetID + '"></div></div>');
                 widgetContainer.append(widgetDiv);
+
+
                 if (axisX.type === 'slider') {
                     var nexusUiWidget = new Nexus.Slider('#' + widgetID, {
-                        'size': [120,20],
-                        'mode': 'relative',  // 'relative' or 'absolute'
+                        'size': [140,20],
+                        'mode': 'relative',
                         'min': axisX.min,
                         'max': axisX.max,
                         'step': axisX.step,
@@ -132,8 +135,29 @@ socket.on('cppinput', function (data) {
                     nexusUiWidget.on('change',function(value) {
                         var widget = widgetIDs[this.settings.target];
                         updateFaustZone(widget[0].zone, value);
-                    })
+                    });
                 }
+                else if (axisX.type === 'xypad') {
+                    $('#' + widgetID).addClass('xy-pad-container');
+                    var nexusUiWidget = new Nexus.Position('#' + widgetID, {
+                        'size': [140,140],
+                        'mode': 'relative',
+                        'x': axisX.value,
+                        'minX': axisX.min,
+                        'maxX': axisX.max,
+                        'stepX': axisX.step,
+                        'y': axisY.value,
+                        'minY': axisY.min,
+                        'maxY': axisY.max,
+                        'stepY': axisY.step
+                    });
+                    nexusUiWidget.on('change',function(value) {
+                        var widget = widgetIDs[this.settings.target];
+                        updateFaustZone(widget[0].zone, value.x);
+                        updateFaustZone(widget[1].zone, value.y);
+                    });
+                }
+
             }
         }
     }

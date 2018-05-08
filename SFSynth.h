@@ -14,7 +14,7 @@ class SFSynth {
     int sustained[127];
     bool isSustaining = false;
     int tsfPreset = 0;
-    float gain = 0.5;
+    float gain = 0.2;
 public:
     SFSynth(unsigned int sampleRate, unsigned int bufferSize);
     void setPreset(int bank, int preset);

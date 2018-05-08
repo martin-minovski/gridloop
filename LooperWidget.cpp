@@ -6,6 +6,7 @@
 
 LooperWidget::LooperWidget(int channel) {
     this->looperChannel = channel;
+    this->type = strdup("slider");
 };
 
 void LooperWidget::setParams(const char* name, float* zone, float min, float max, float step) {

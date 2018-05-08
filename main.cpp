@@ -175,6 +175,8 @@ int main() {
     vocoder = new Vocoder();
     fileManager = new FileManager();
     audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::UNIX_JACK);
+    // Emit updated wiget zones
+    osc->sendJson(looper->getWidgetJSON().c_str());
 
 
     // Initialize MIDI listener

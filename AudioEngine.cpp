@@ -7,7 +7,7 @@ using namespace std;
 
 AudioEngine::AudioEngine(unsigned int sampleRate, unsigned int bufferFrames, RtAudioCallback render, RtAudio::Api api) {
     
-    dac = new RtAudio(RtAudio::UNIX_JACK);
+    dac = new RtAudio(api);
     if ( dac->getDeviceCount() < 1 ) {
         std::cout << "\nNo audio devices found!\n";
         exit( 0 );
@@ -16,7 +16,7 @@ AudioEngine::AudioEngine(unsigned int sampleRate, unsigned int bufferFrames, RtA
 
     printCurrentAudioDriver();
 
-//    probeDevices(dac);
+//    probeDevices();
 
     RtAudio::StreamParameters parametersOut;
     parametersOut.deviceId = dac->getDefaultOutputDevice();
