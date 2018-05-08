@@ -13,3 +13,13 @@ function makeId() {
 
     return text;
 }
+
+function setBlur(value) {
+    var filterVal = 'blur(' + value + 'px)';
+    $('.zoomViewport')
+        .css('filter',filterVal)
+        .css('webkitFilter',filterVal)
+        .css('mozFilter',filterVal)
+        .css('oFilter',filterVal)
+        .css('msFilter',filterVal);
+}

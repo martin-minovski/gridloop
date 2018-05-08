@@ -71,8 +71,16 @@ function faustSave() {
     });
 }
 
+function faustOpen(channel, code) {
+    $('#faust-channel-span').html(channel+1);
+    $('#faust-editor-container').show();
+    setBlur(1);
+    editor.setValue(code, 1);
+}
+
 function faustClose() {
     $('#faust-editor-container').hide();
+    setBlur(0);
 }
 
 var socket = io('/');
@@ -84,9 +92,7 @@ socket.on('cppinput', function (data) {
     if (data.address === 'faust_code') {
         var channel = data.args[0].value;
         var code = data.args[1].value;
-        $('#faust-channel-span').html(channel+1);
-        $('#faust-editor-container').show();
-        editor.setValue(code, 1);
+        faustOpen(channel, code);
     }
     if (data.address === 'faust_error') {
         updateAllWidgets();
@@ -101,7 +107,6 @@ socket.on('cppinput', function (data) {
         });
         widgets.forEach(function(widget) {
             faustWidgets[widget.looperChannel][widget.name][widget.axis] = widget;
-
         });
 
         console.log("Widgets array: ", faustWidgets);
@@ -118,10 +123,10 @@ socket.on('cppinput', function (data) {
                 var axisX = widget[0];
                 var axisY = widget[1];
                 var axisZ = widget[2];
+                if (!axisX) continue;
 
                 var widgetDiv = $('<div style="font-size: 10px;">' + j + '<br /><div class="widget-div" id="' + widgetID + '"></div></div>');
                 widgetContainer.append(widgetDiv);
-
 
                 if (axisX.type === 'slider') {
                     var nexusUiWidget = new Nexus.Slider('#' + widgetID, {
@@ -138,7 +143,6 @@ socket.on('cppinput', function (data) {
                     });
                 }
                 else if (axisX.type === 'xypad') {
-                    $('#' + widgetID).addClass('xy-pad-container');
                     var nexusUiWidget = new Nexus.Position('#' + widgetID, {
                         'size': [140,140],
                         'mode': 'relative',
@@ -156,6 +160,51 @@ socket.on('cppinput', function (data) {
                         updateFaustZone(widget[0].zone, value.x);
                         updateFaustZone(widget[1].zone, value.y);
                     });
+                    $('#' + widgetID).addClass('rounded-widget-container');
+                }
+                else if (axisX.type === 'tilt') {
+                    var nexusUiWidget = new Nexus.Tilt('#' + widgetID);
+                    nexusUiWidget.active = false;
+
+                    nexusUiWidget.on('change',function(value) {
+                        var widget = widgetIDs[this.settings.target];
+                        if (widget[0] && value.x)
+                            updateFaustZone(widget[0].zone, value.x * (widget[0].max - widget[0].min) + widget[0].min);
+                        if (widget[1] && value.y)
+                            updateFaustZone(widget[1].zone, value.y * (widget[1].max - widget[1].min) + widget[1].min);
+                        if (widget[2] && value.z)
+                            updateFaustZone(widget[2].zone, value.z * (widget[2].max - widget[2].min) + widget[2].min);
+                    });
+                    $('#' + widgetID).css('margin-left', '30px').addClass('rounded-widget-container');
+                }
+                else if (axisX.type === 'button') {
+                    var nexusUiWidget = new Nexus.Button('#' + widgetID, {
+                        'size': [50,50],
+                        'mode': 'aftertouch',
+                        'state': false
+                    });
+                    nexusUiWidget.on('change',function(value) {
+                        var widget = widgetIDs[this.settings.target];
+                        if (widget[0])
+                            updateFaustZone(widget[0].zone, value.state ? widget[0].max : widget[0].min);
+                        if (widget[1])
+                            updateFaustZone(widget[1].zone, value.x * (widget[1].max - widget[1].min) + widget[1].min);
+                        if (widget[2])
+                            updateFaustZone(widget[2].zone, value.y * (widget[2].max - widget[2].min) + widget[2].min);
+                    });
+                    $('#' + widgetID).css('margin-left', '45px');
+                }
+                else if (axisX.type === 'toggle') {
+                    var nexusUiWidget = new Nexus.Toggle('#' + widgetID, {
+                        'size': [60, 30],
+                        'state': false
+                    });
+                    nexusUiWidget.on('change',function(value) {
+                        var widget = widgetIDs[this.settings.target];
+                        if (widget[0])
+                            updateFaustZone(widget[0].zone, value ? widget[0].max : widget[0].min);
+                    });
+                    $('#' + widgetID).css('margin-left', '40px');
                 }
 
             }
