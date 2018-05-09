@@ -58,17 +58,17 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         std::cout << "Stream underflow detected!" << std::endl;
     }
 
+    float fftSample = 0;
     for (int i = 0; i < nBufferFrames * 2; i++) {
         float tsfSample = sfSynth->getNextSample();
         float inputSample = (float) inBuffer[(i / 2) * 2];
-        inputSample = 0; // disable for now.
-        float looperSample = looper->process(tsfSample + inputSample);
-        outBuffer[i] = tsfSample + looperSample + inputSample;
+//        inputSample = 0; // disable for now.
+//        float looperSample = looper->process(tsfSample + inputSample);
+//        outBuffer[i] = tsfSample + looperSample + inputSample;
 
-//        float fftSample = 0;
-//        if (i % 2 == 0) fftSample = vocoder->processSample(tsfSample);
+        if (i % 2 == 0) fftSample = vocoder->processSample(inputSample);
 //        else fftSample = tsfSample;
-//        outBuffer[i] = fftSample;
+        outBuffer[i] = fftSample;
     }
 
     osc->oscListen();
@@ -159,6 +159,10 @@ void oscCallback(tosc_message* msg) {
         string code = tosc_getNextString(msg);
         fileManager->writeFaustCode(channel, code);
         if (looper->reloadChannelDSP(channel)) osc->sendFaustAck();
+    }
+    else if (address == "vocoderswitch") {
+        bool state = tosc_getNextInt32(msg) == 1;
+        vocoder->switchState(state);
     }
 }
 

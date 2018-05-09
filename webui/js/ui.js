@@ -123,6 +123,8 @@ socket.on('cppinput', function (data) {
                 var axisX = widget[0];
                 var axisY = widget[1];
                 var axisZ = widget[2];
+                if (!axisX) axisX = axisY;
+                if (!axisX) axisX = axisZ;
                 if (!axisX) continue;
 
                 var widgetDiv = $('<div style="font-size: 10px;">' + j + '<br /><div class="widget-div" id="' + widgetID + '"></div></div>');
@@ -398,6 +400,22 @@ $(document).ready(function() {
         // fitWidth: true
         horizontalOrder: false,
         columnWidth: 1 // ???
+    });
+
+    var vocoderSwitch = new Nexus.Toggle('#vocoder-switch', {
+        'size': [20, 20],
+        'state': false
+    });
+    vocoderSwitch.on('change',function(value) {
+        socket.emit('ui', {
+            address: 'vocoderswitch',
+            args: [
+                {
+                    type: 'integer',
+                    value: value ? 1 : 0
+                }
+            ]
+        });
     });
 });
 
