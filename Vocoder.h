@@ -7,16 +7,21 @@
 
 #include "kiss_fft.h"
 #include <limits>
+#include <iostream>
+#include <cmath>
+#include <complex>
+using namespace std;
 
 struct Bin
 {
     kiss_fft_cpx complex;
+    float phase;
     int peak;
-    int shiftedBy;
+    float shiftedBy;
 };
 
 const int fftSize = 4096;
-const int hopSize = 2048;
+const int hopSize = 512;
 const int olaSize = fftSize + hopSize;
 
 class Vocoder {
@@ -27,8 +32,8 @@ class Vocoder {
     float mag[fftSize];
 
     // TODO: NexusUI
-    bool phaseLock = true;
-    float gBetaFactor = 2.0f;
+    bool stateSwitch = true;
+    float gBetaFactor = 0.75f;
 
     kiss_fft_cfg inFFT;
     kiss_fft_cfg outFFT;
@@ -50,7 +55,7 @@ public:
     float processSample(float &sample);
     void processFrequencyDomain(kiss_fft_cpx* cpx);
     void setBetaFactor(float newBetaFactor);
-
+    void switchState(bool state);
 };
 
 

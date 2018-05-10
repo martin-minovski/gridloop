@@ -11,6 +11,7 @@
 #include "AudioEngine.h"
 #include "SFSynth.h"
 #include "FileManager.h"
+#include "PitchDetector.h"
 
 //#define MIDI_ENABLED
 
@@ -22,6 +23,7 @@ OSC* osc;
 AudioEngine* audioEngine;
 SFSynth* sfSynth;
 FileManager* fileManager;
+PitchDetector* pitchDetector;
 
 bool looperListening = false;
 
@@ -58,18 +60,27 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         std::cout << "Stream underflow detected!" << std::endl;
     }
 
+    float fftSample = 0;
     for (int i = 0; i < nBufferFrames * 2; i++) {
         float tsfSample = sfSynth->getNextSample();
         float inputSample = (float) inBuffer[(i / 2) * 2];
-        inputSample = 0; // disable for now.
-        float looperSample = looper->process(tsfSample + inputSample);
-        outBuffer[i] = tsfSample + looperSample + inputSample;
+        inputSample = tsfSample;
 
-//        float fftSample = 0;
-//        if (i % 2 == 0) fftSample = vocoder->processSample(tsfSample);
+//        float looperSample = looper->process(tsfSample + inputSample);
+//        outBuffer[i] = tsfSample + looperSample + inputSample;
+
+        if (i % 2 == 0) {
+            fftSample = vocoder->processSample(inputSample);
+            pitchDetector->process(inputSample);
+        }
 //        else fftSample = tsfSample;
-//        outBuffer[i] = fftSample;
+        outBuffer[i] = fftSample;
     }
+
+    float targetFrequency = 300;
+    float currentPitch = pitchDetector->getPitch();
+    float ratio = targetFrequency / currentPitch;
+    vocoder->setBetaFactor(ratio);
 
     osc->oscListen();
 
@@ -160,19 +171,26 @@ void oscCallback(tosc_message* msg) {
         fileManager->writeFaustCode(channel, code);
         if (looper->reloadChannelDSP(channel)) osc->sendFaustAck();
     }
+    else if (address == "vocoderswitch") {
+        bool state = tosc_getNextInt32(msg) == 1;
+        vocoder->switchState(state);
+    }
 }
+
+
+
 
 int main() {
 
     // Audio parameters
     unsigned int sampleRate = 44100;
-    unsigned int bufferFrames = 128;
-
+    unsigned int bufferFrames = 512;
 
     sfSynth = new SFSynth(sampleRate * 2, bufferFrames);
     osc = new OSC(oscCallback);
     looper = new Looper(osc);
     vocoder = new Vocoder();
+    pitchDetector = new PitchDetector(sampleRate, 1024);
     fileManager = new FileManager();
     audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::UNIX_JACK);
     // Emit updated wiget zones
