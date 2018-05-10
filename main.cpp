@@ -11,6 +11,7 @@
 #include "AudioEngine.h"
 #include "SFSynth.h"
 #include "FileManager.h"
+#include "PitchDetector.h"
 
 //#define MIDI_ENABLED
 
@@ -22,6 +23,7 @@ OSC* osc;
 AudioEngine* audioEngine;
 SFSynth* sfSynth;
 FileManager* fileManager;
+PitchDetector* pitchDetector;
 
 bool looperListening = false;
 
@@ -62,14 +64,23 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     for (int i = 0; i < nBufferFrames * 2; i++) {
         float tsfSample = sfSynth->getNextSample();
         float inputSample = (float) inBuffer[(i / 2) * 2];
-//        inputSample = 0; // disable for now.
+        inputSample = tsfSample;
+
 //        float looperSample = looper->process(tsfSample + inputSample);
 //        outBuffer[i] = tsfSample + looperSample + inputSample;
 
-        if (i % 2 == 0) fftSample = vocoder->processSample(inputSample);
+        if (i % 2 == 0) {
+            fftSample = vocoder->processSample(inputSample);
+            pitchDetector->process(inputSample);
+        }
 //        else fftSample = tsfSample;
         outBuffer[i] = fftSample;
     }
+
+    float targetFrequency = 300;
+    float currentPitch = pitchDetector->getPitch();
+    float ratio = targetFrequency / currentPitch;
+    vocoder->setBetaFactor(ratio);
 
     osc->oscListen();
 
@@ -166,17 +177,20 @@ void oscCallback(tosc_message* msg) {
     }
 }
 
+
+
+
 int main() {
 
     // Audio parameters
     unsigned int sampleRate = 44100;
-    unsigned int bufferFrames = 128;
-
+    unsigned int bufferFrames = 512;
 
     sfSynth = new SFSynth(sampleRate * 2, bufferFrames);
     osc = new OSC(oscCallback);
     looper = new Looper(osc);
     vocoder = new Vocoder();
+    pitchDetector = new PitchDetector(sampleRate, 1024);
     fileManager = new FileManager();
     audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::UNIX_JACK);
     // Emit updated wiget zones

@@ -20,7 +20,7 @@ struct Bin
     float shiftedBy;
 };
 
-const int fftSize = 8192;
+const int fftSize = 4096;
 const int hopSize = 512;
 const int olaSize = fftSize + hopSize;
 
