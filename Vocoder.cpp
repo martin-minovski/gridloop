@@ -5,11 +5,9 @@
 #include "Vocoder.h"
 
 Vocoder::Vocoder() {
-    // Init shiftedBy
+    // Init phase differences
     for (int n = 0; n < fftSize; n++) {
-        prevFrame[n].shiftedBy = 0;
-        prevFrame[n].phase = 0;
-        prevFrame[n].peak = 0;
+        phaseDifference[n] = 0;
     }
 
     // Calculate a Hann window
@@ -102,12 +100,15 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
 
     // Initialize
     for (int n = 0; n < fftSize; n++) {
-        mag[n] = sqrtf(cpx[n].r * cpx[n].r + cpx[n].i * cpx[n].i);
 
         nextFrame[n].complex.r = cpx[n].r;
         nextFrame[n].complex.i = cpx[n].i;
         nextFrame[n].peak = 0;
-        nextFrame[n].phase = 0;
+
+        std::complex<float> ccpx = {cpx[n].r, cpx[n].i};
+        nextFrame[n].abs = abs(ccpx);
+        nextFrame[n].arg = arg(ccpx);
+        mag[n] = abs(ccpx);
     }
 
     // Get magnitudes and pinpoint peaks
@@ -153,6 +154,9 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
         nextShifted[n].complex.r = 0.0f;
         nextShifted[n].shiftedBy = 0;
         nextShifted[n].peak = 0;
+
+        nextShifted[n].abs = 0;
+        nextShifted[n].arg = 0;
     }
 
     // Shift peaks
@@ -169,38 +173,37 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
         float x = newPeakLocation - precisePeakLocation;
 
         if (shiftIndex >= 0 && shiftIndex < fftSize) {
-//            if (x >= 0 && n > 0) {
-//                nextShifted[shiftIndex].complex.r += nextFrame[n-1].complex.r * x + nextFrame[n].complex.r * (1-x);
-//                nextShifted[shiftIndex].complex.i += nextFrame[n-1].complex.i * x + nextFrame[n].complex.i * (1-x);
-//            }
-//            if (x < 0 && n < fftSize-1) {
-//                nextShifted[shiftIndex].complex.r += nextFrame[n+1].complex.r * (-x) + nextFrame[n].complex.r * (1-(-x));
-//                nextShifted[shiftIndex].complex.i += nextFrame[n+1].complex.i * (-x) + nextFrame[n].complex.i * (1-(-x));
-//            }
-//            nextShifted[shiftIndex].shiftedBy = precisePeakLocation - nextFrame[n].peak;
-            nextShifted[shiftIndex].complex.r += nextFrame[n].complex.r;
-            nextShifted[shiftIndex].complex.i += nextFrame[n].complex.i;
-            nextShifted[shiftIndex].shiftedBy = shiftValue;
-            nextShifted[shiftIndex].peak = newPeakLocation;
+            if (x >= 0 && n > 0) {
+                nextShifted[shiftIndex].abs = nextFrame[n-1].abs * x + nextFrame[n].abs * (1-x);
+            }
+            if (x < 0 && n < fftSize-1) {
+                nextShifted[shiftIndex].abs = nextFrame[n+1].abs * (-x) + nextFrame[n].abs * (1-(-x));
+            }
+            nextShifted[shiftIndex].complex.i = nextFrame[n].arg;
+            nextShifted[shiftIndex].shiftedBy = precisePeakLocation - nextFrame[n].peak;
+//            nextShifted[shiftIndex].abs = nextFrame[n].abs;
+//            nextShifted[shiftIndex].arg = nextFrame[n].arg;
+//            nextShifted[shiftIndex].shiftedBy = shiftValue;
+//            nextShifted[shiftIndex].peak = newPeakLocation;
         }
     }
+
+    float tempDiff[fftSize];
 
     // Adjust phases
     for (int n = 0; n < fftSize; n++) {
         if (stateSwitch) {
-            std::complex<float> ccpx(nextShifted[n].complex.r, nextShifted[n].complex.i);
-            float magnitude = abs(ccpx);
-            float phase = prevFrame[nextShifted[n].peak].phase + ((2 * (float)M_PI * nextShifted[n].shiftedBy) / fftSize) * hopSize;
-            ccpx = polar(magnitude, phase + arg(ccpx));
+            float magnitude = nextShifted[n].abs;
+            float diff = phaseDifference[nextShifted[n].peak] + ((2 * (float)M_PI * nextShifted[n].shiftedBy) / fftSize) * hopSize;
+            std::complex<float> ccpx = polar(magnitude, nextShifted[n].arg + diff);
             nextShifted[n].complex.r = real(ccpx);
             nextShifted[n].complex.i = imag(ccpx);
-            nextShifted[n].phase = phase;
 
+            tempDiff[n] = diff;
         }
     }
     for (int n = 0; n < fftSize; n++) {
-        prevFrame[n].phase = nextShifted[n].phase;
-        prevFrame[n].peak = nextShifted[n].peak;
+        phaseDifference[n] = tempDiff[n];
     }
 
     // Submit
@@ -212,6 +215,7 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
 
 void Vocoder::setBetaFactor(float newBetaFactor) {
     gBetaFactor = newBetaFactor;
+    cout<<"Beta: "<<newBetaFactor<<endl;
 }
 
 void Vocoder::switchState(bool state) {

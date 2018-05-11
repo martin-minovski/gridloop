@@ -15,18 +15,21 @@ using namespace std;
 struct Bin
 {
     kiss_fft_cpx complex;
-    float phase;
+
+    float abs;
+    float arg;
+
     int peak;
     float shiftedBy;
 };
 
 const int fftSize = 4096;
-const int hopSize = 512;
+const int hopSize = 1024;
 const int olaSize = fftSize + hopSize;
 
 class Vocoder {
 
-    Bin prevFrame[fftSize];
+    float phaseDifference[fftSize];
     Bin nextFrame[fftSize];
     Bin nextShifted[fftSize];
     float mag[fftSize];
