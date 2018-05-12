@@ -15,14 +15,14 @@ using namespace std;
 struct Bin
 {
     kiss_fft_cpx complex;
-    float phase;
+    double phase;
     int peak;
-    float precisePeak;
-    float shiftedBy;
+    double precisePeak;
+    double shiftedBy;
 };
 
-const int fftSize = 2048;
-const int hopSize = 256;
+const int fftSize = 4096;
+const int hopSize = 1024;
 const int olaSize = fftSize + hopSize;
 
 class Vocoder {
@@ -30,26 +30,26 @@ class Vocoder {
     Bin prevFrame[fftSize];
     Bin nextFrame[fftSize];
     Bin nextShifted[fftSize];
-    float mag[fftSize];
+    double mag[fftSize];
 
     // TODO: NexusUI
     bool stateSwitch = true;
-    float gBetaFactor = 0.75f;
+    double gBetaFactor = 1.33;
 
     kiss_fft_cfg inFFT;
     kiss_fft_cfg outFFT;
-    float assemblyBuffer[fftSize];
+    double assemblyBuffer[fftSize];
     kiss_fft_cpx cpxBufferIn[fftSize];
     kiss_fft_cpx cpxBuffer[fftSize];
     kiss_fft_cpx cpxBufferOut[fftSize];
 
     int hopCounter = 0;
-    float hopBuffer[hopSize];
+    double hopBuffer[hopSize];
 
-    float olaBuffer[olaSize];
+    double olaBuffer[olaSize];
     int olaRead = 0;
     int olaWrite = hopSize;
-    float hannWindow[fftSize];
+    double hannWindow[fftSize];
 
 public:
     Vocoder();
