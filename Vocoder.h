@@ -17,11 +17,12 @@ struct Bin
     kiss_fft_cpx complex;
     float phase;
     int peak;
+    float precisePeak;
     float shiftedBy;
 };
 
-const int fftSize = 4096;
-const int hopSize = 512;
+const int fftSize = 2048;
+const int hopSize = 256;
 const int olaSize = fftSize + hopSize;
 
 class Vocoder {

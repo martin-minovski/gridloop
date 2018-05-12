@@ -66,9 +66,9 @@ float Vocoder::processSample(float &sample) {
         kiss_fft(outFFT, cpxBuffer, cpxBufferOut);
 
         // Frame-synchronous time-domain amplitude modulation for the peak-shift linear interpolation
-        for (int n = 0; n < fftSize; n++) {
-            cpxBufferOut[n].r = cpxBufferOut[n].r * sinf((float)M_PI * ((float)n / (float)fftSize));
-        }
+//        for (int n = 0; n < fftSize; n++) {
+//            cpxBufferOut[n].r = cpxBufferOut[n].r * sinf((float)M_PI * ((float)n / (float)fftSize));
+//        }
 
         // Scale and overlap-add
         for (int j = 0; j < fftSize; j++) {
@@ -107,6 +107,7 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
         nextFrame[n].complex.r = cpx[n].r;
         nextFrame[n].complex.i = cpx[n].i;
         nextFrame[n].peak = 0;
+        nextFrame[n].precisePeak = 0;
         nextFrame[n].phase = 0;
     }
 
@@ -147,6 +148,17 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
         }
     }
 
+    // Estimate precise peak location
+    for (int n = 0; n < fftSize; n++) {
+        if (nextFrame[n].peak == n) {
+            // Quadratic
+//            float d = (mag[n+1] - mag[n-1]) / (2 * (2 * mag[n] - mag[n-1] - mag[n+1]));
+            // Barycentric
+            float d = (mag[n+1] - mag[n-1]) / (mag[n] + mag[n-1] + mag[n+1]);
+            nextFrame[n].precisePeak = n + stateSwitch * d;
+        }
+    }
+
     // Prepare nextShifted
     for (int n = 0; n < fftSize; n++) {
         nextShifted[n].complex.i = 0.0f;
@@ -159,35 +171,49 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
     for (int n = 0; n < fftSize; n++) {
         if (nextFrame[n].peak > 3 * fftSize / 4) continue; // Fix high pitch noise
 
-        float precisePeakLocation = localBetaFactor * nextFrame[n].peak;
+        float precisePeakLocation = localBetaFactor * nextFrame[nextFrame[n].peak].precisePeak;
         int newPeakLocation = (int)round(precisePeakLocation);
         int shiftValue = newPeakLocation - nextFrame[n].peak;
-
         int shiftIndex = n + shiftValue;
 
-
+        // Apply linear interpolation
         float x = newPeakLocation - precisePeakLocation;
-
         if (shiftIndex >= 0 && shiftIndex < fftSize) {
-//            if (x >= 0 && n > 0) {
-//                nextShifted[shiftIndex].complex.r += nextFrame[n-1].complex.r * x + nextFrame[n].complex.r * (1-x);
-//                nextShifted[shiftIndex].complex.i += nextFrame[n-1].complex.i * x + nextFrame[n].complex.i * (1-x);
-//            }
-//            if (x < 0 && n < fftSize-1) {
-//                nextShifted[shiftIndex].complex.r += nextFrame[n+1].complex.r * (-x) + nextFrame[n].complex.r * (1-(-x));
-//                nextShifted[shiftIndex].complex.i += nextFrame[n+1].complex.i * (-x) + nextFrame[n].complex.i * (1-(-x));
-//            }
-//            nextShifted[shiftIndex].shiftedBy = precisePeakLocation - nextFrame[n].peak;
-            nextShifted[shiftIndex].complex.r += nextFrame[n].complex.r;
-            nextShifted[shiftIndex].complex.i += nextFrame[n].complex.i;
-            nextShifted[shiftIndex].shiftedBy = shiftValue;
-            nextShifted[shiftIndex].peak = newPeakLocation;
+            if (stateSwitch) {
+                if (x >= 0 && n > 0) {
+                    float additionR = 0;
+                    float additionI = 0;
+                    if (nextFrame[n].peak == nextFrame[n - 1].peak) {
+                        additionR = (nextFrame[n - 1].complex.r * x);
+                        additionI = (nextFrame[n - 1].complex.i * x);
+                    }
+                    nextShifted[shiftIndex].complex.r += additionR + (nextFrame[n].complex.r * (1.0f - x));
+                    nextShifted[shiftIndex].complex.i += additionI + (nextFrame[n].complex.i * (1.0f - x));
+                }
+                if (x < 0 && n < fftSize - 1) {
+                    float additionR = 0;
+                    float additionI = 0;
+                    if (nextFrame[n].peak == nextFrame[n + 1].peak) {
+                        additionR = (nextFrame[n + 1].complex.r * -x);
+                        additionI = (nextFrame[n + 1].complex.i * -x);
+                    }
+                    nextShifted[shiftIndex].complex.r += additionR + (nextFrame[n].complex.r * (1.0f + x));
+                    nextShifted[shiftIndex].complex.i += additionI + (nextFrame[n].complex.i * (1.0f + x));
+                }
+                nextShifted[shiftIndex].shiftedBy = precisePeakLocation - nextFrame[nextFrame[n].peak].precisePeak;
+                nextShifted[shiftIndex].peak = newPeakLocation;
+            }
+            else {
+                nextShifted[shiftIndex].complex.r += nextFrame[n].complex.r;
+                nextShifted[shiftIndex].complex.i += nextFrame[n].complex.i;
+                nextShifted[shiftIndex].shiftedBy = shiftValue;
+                nextShifted[shiftIndex].peak = newPeakLocation;
+            }
         }
     }
 
     // Adjust phases
     for (int n = 0; n < fftSize; n++) {
-        if (stateSwitch) {
             std::complex<float> ccpx(nextShifted[n].complex.r, nextShifted[n].complex.i);
             float magnitude = abs(ccpx);
             float phase = prevFrame[nextShifted[n].peak].phase + ((2 * (float)M_PI * nextShifted[n].shiftedBy) / fftSize) * hopSize;
@@ -195,8 +221,6 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
             nextShifted[n].complex.r = real(ccpx);
             nextShifted[n].complex.i = imag(ccpx);
             nextShifted[n].phase = phase;
-
-        }
     }
     for (int n = 0; n < fftSize; n++) {
         prevFrame[n].phase = nextShifted[n].phase;
