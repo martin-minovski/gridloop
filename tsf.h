@@ -490,7 +490,7 @@ static void tsf_region_operator(struct tsf_region* region, tsf_u16 genOper, unio
 		case ModEnvToFilterFc:           region->modEnvToFilterFc = amount->shortAmount; break;
 		case EndAddrsCoarseOffset:       region->end += amount->shortAmount * 32768; break;
 		case ModLfoToVolume:             region->modLfoToVolume = amount->shortAmount; break;
-		case Pan:                        region->pan = amount->shortAmount / 1000.0f; break;
+//		case Pan:                        region->pan = amount->shortAmount / 1000.0f; break;
 		case DelayModLFO:                region->delayModLFO = amount->shortAmount; break;
 		case FreqModLFO:                 region->freqModLFO = amount->shortAmount; break;
 		case DelayVibLFO:                region->delayVibLFO = amount->shortAmount; break;

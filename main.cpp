@@ -1,293 +1,273 @@
-#define TSF_IMPLEMENTATION
+
 
 #include <iostream>
-#include <map>
+
 #include "rtaudio/RtAudio.h"
 #include "stk/RtMidi.h"
-#include "tsf.h"
+
 #include "Looper.h"
 #include "Vocoder.h"
 #include "OSC.h"
+#include "AudioEngine.h"
+#include "SFSynth.h"
+#include "FileManager.h"
+#include "PitchDetector.h"
+#include <cmath>
+
+#define MIDI_ENABLED
+
 using namespace std;
 
-tsf* TinySoundFont;
-float tsfBuffer[1024];
+Looper* looper;
+Vocoder* vocoder;
+Vocoder* vocoder2;
+Vocoder* vocoder3;
+OSC* osc;
+AudioEngine* audioEngine;
+FileManager* fileManager;
+PitchDetector* pitchDetector;
 
-
-int sustained[127];
-bool sustainOn = false;
-int tsfPreset = 23;
-
-double globalGain = 0.5;
-
-Looper looper;
-Vocoder vocoder;
-OSC osc;
-
-void probeDevices(RtAudio &audio) {
-    int devices = audio.getDeviceCount();
-    RtAudio::DeviceInfo info;
-    for (unsigned int i=0; i<devices; i++) {
-        info = audio.getDeviceInfo(i);
-
-        std::cout << "\nDevice Name = " << info.name << '\n';
-        if ( info.probed == false )
-            std::cout << "Probe Status = UNsuccessful\n";
-        else {
-            std::cout << "Probe Status = Successful\n";
-            std::cout << "Output Channels = " << info.outputChannels << '\n';
-            std::cout << "Input Channels = " << info.inputChannels << '\n';
-            std::cout << "Duplex Channels = " << info.duplexChannels << '\n';
-            if ( info.isDefaultOutput ) std::cout << "This is the default output device.\n";
-            else std::cout << "This is NOT the default output device.\n";
-            if ( info.isDefaultInput ) std::cout << "This is the default input device.\n";
-            else std::cout << "This is NOT the default input device.\n";
-            if ( info.nativeFormats == 0 )
-                std::cout << "No natively supported data formats(?)!";
-            else {
-                std::cout << "Natively supported data formats:\n";
-                if ( info.nativeFormats & RTAUDIO_SINT8 )
-                    std::cout << "  8-bit int\n";
-                if ( info.nativeFormats & RTAUDIO_SINT16 )
-                    std::cout << "  16-bit int\n";
-                if ( info.nativeFormats & RTAUDIO_SINT24 )
-                    std::cout << "  24-bit int\n";
-                if ( info.nativeFormats & RTAUDIO_SINT32 )
-                    std::cout << "  32-bit int\n";
-                if ( info.nativeFormats & RTAUDIO_FLOAT32 )
-                    std::cout << "  32-bit float\n";
-                if ( info.nativeFormats & RTAUDIO_FLOAT64 )
-                    std::cout << "  64-bit float\n";
-            }
-            if ( info.sampleRates.size() < 1 )
-                std::cout << "No supported sample rates found!";
-            else {
-                std::cout << "Supported sample rates = ";
-                for (unsigned int j=0; j<info.sampleRates.size(); j++)
-                    std::cout << info.sampleRates[j] << " ";
-            }
-            std::cout << std::endl;
-        }
-    }
-    std::cout << std::endl;
-}
-
-void printCurrentAudioDriver(RtAudio& audio) {
-    // Create an api map.
-    std::map<int, std::string> apiMap;
-    apiMap[RtAudio::MACOSX_CORE] = "OS-X Core Audio";
-    apiMap[RtAudio::WINDOWS_ASIO] = "Windows ASIO";
-    apiMap[RtAudio::WINDOWS_DS] = "Windows Direct Sound";
-    apiMap[RtAudio::WINDOWS_WASAPI] = "Windows WASAPI";
-    apiMap[RtAudio::UNIX_JACK] = "Jack Client";
-    apiMap[RtAudio::LINUX_ALSA] = "Linux ALSA";
-    apiMap[RtAudio::LINUX_PULSE] = "Linux PulseAudio";
-    apiMap[RtAudio::LINUX_OSS] = "Linux OSS";
-    apiMap[RtAudio::RTAUDIO_DUMMY] = "RtAudio Dummy";
-
-    std::cout << "\nCurrent API: " << apiMap[ audio.getCurrentApi() ] << std::endl;
-}
+bool looperListening = false;
+bool vocoderEnabled = false;
 
 void midiCallback( double deltatime, std::vector< unsigned char > *message, void *userData )
 {
 
+
     unsigned int nBytes = message->size();
-    for ( unsigned int i=0; i<nBytes; i++ )
-        std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
-    if ( nBytes > 0 )
-        std::cout << "stamp = " << deltatime << std::endl;
+//    for ( unsigned int i=0; i<nBytes; i++ )
+//        std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+//    if ( nBytes > 0 )
+//        std::cout << "stamp = " << deltatime << std::endl;
 
-
-    if (message->at(0) == 144) {
-        int pitch = message->at(1);
-        if (message->at(2) == 0) {
-            if (sustainOn) sustained[pitch] = 1;
-            else tsf_note_off(TinySoundFont, tsfPreset, pitch);
-        }
-        else {
-            if (pitch == 107) {
-                tsfPreset--;
-            }
-            else if (pitch == 108) {
-                tsfPreset++;
-            }
-            else {
-                tsf_note_off(TinySoundFont, tsfPreset, pitch);
-                tsf_note_on(TinySoundFont, tsfPreset, pitch, (float)message->at(2)/128);
-                sustained[pitch] = false;
-            }
-
-        }
+    int pitch = message->at(1);
+    if (pitch == 1) {
+        vocoder->setBetaFactor(0.95f + ((float)message->at(2) / 1280.0f));
+    }
+    else if (pitch == 21) {
 
     }
+    else if (pitch == 22) {
 
+    }
+    else {
+        if (message->at(2) == 0) SFSynth::noteOff(pitch);
+        else  {
+            SFSynth::noteOn(pitch, message->at(2));
+            if (looperListening) {
+                looper->startRec();
+                looperListening = false;
+            }
+        }
+    }
+
+//    if (message->at(0) == 144 || message->at(0) == 158) {
+//    }
 //    if (message->at(0) == 176) {
-//        sustainOn = (message->at(2) > 0);
-//        if (!sustainOn) {
-//            for (int i = 0; i < 128; i++) {
-//                if (sustained[i]) tsf_note_off(TinySoundFont, tsfPreset, i);
-//            }
-//        }
+//        if (message->at(2) > 0) SFSynth::sustainOn();
+//        else SFSynth::sustainOff();
 //    }
 }
 
-
-unsigned int bufferFrames = 256; // 256 sample frames
+float targetFrequency = 500;
 
 int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
            double streamTime, RtAudioStreamStatus status, void *userData) {
 
-    int nChannels = 2;
     double *inBuffer = (double *) inputBuffer;
     double *outBuffer = (double *) outputBuffer;
-
-    tsf_render_float(TinySoundFont, tsfBuffer, nChannels * nBufferFrames, 0);
 
     if (status) {
         std::cout << "Stream underflow detected!" << std::endl;
     }
 
-    looper.render(inBuffer, outBuffer, nBufferFrames);
+    float fftSample = 0;
+    for (int i = 0; i < nBufferFrames * 2; i++) {
+        float tsfSample = SFSynth::getNextSample();
+        float inputSample = (float) inBuffer[(i / 2) * 2];
+        inputSample += tsfSample;
 
-    int totalFrames = nBufferFrames * nChannels;
-    for (int i = 0; i < totalFrames; i++) {
-        float tsfSample = tsfBuffer[i];
-        double inputSample = inBuffer[i];
+        float looperSample = looper->process(tsfSample + inputSample);
+        outBuffer[i] = looperSample;
 
-        float fftSample = 0;
-        if (i % 2 == 0) {
-            fftSample = vocoder.processSample(tsfSample);
+        if (vocoderEnabled) {
+            if (i % 2 == 0) {
+                fftSample = vocoder->processSample(looperSample);
+//              pitchDetector->process(inputSample + fftSample);
+            }
+            outBuffer[i] += fftSample;
         }
-        else {
-            fftSample = tsfSample;
-        }
-
-        outBuffer[i] = fftSample;
     }
 
-    osc.oscListen();
+//    targetFrequency = 196.00;
+//    float targetFrequency2 = 293.66;
+//    float targetFrequency3 = 493.88;
+//    float currentPitch = pitchDetector->getPitch();
+//
+//    float ratio = targetFrequency / currentPitch;
+//    float ratio2 = targetFrequency2 / currentPitch;
+//    float ratio3 = targetFrequency3 / currentPitch;
+//
+//    if (currentPitch > 5 && currentPitch < 2000) {
+//        vocoder->setBetaFactor(ratio);
+//        vocoder2->setBetaFactor(ratio2);
+//        vocoder3->setBetaFactor(ratio3);
+//    }
+
+    osc->oscListen();
 
     return 0;
 }
 
-void processOscMsg(tosc_message* msg) {
+void oscCallback(tosc_message* msg) {
+
 //    tosc_printMessage(msg);
 
     string address = tosc_getAddress(msg);
 
     if (address == "slider") {
-        int id = tosc_getNextInt32(msg);
-        double gain = tosc_getNextFloat(msg);
-        globalGain = gain;
+        string type = tosc_getNextString(msg);
+        float value = tosc_getNextFloat(msg);
+        int meta = tosc_getNextInt32(msg);
+        if (type == "vocoder") {
+            vocoder->setBetaFactor(value);
+        }
+        if (type == "sfgain") {
+            SFSynth::setGain(value);
+        }
+        if (type == "channelvolume") {
+            looper->setChannelVolume(meta, value);
+        }
     }
-    if (address == "piano") {
+    else if (address == "piano") {
         int pitch = tosc_getNextInt32(msg);
         int state = tosc_getNextInt32(msg);
+        int octaveShift = tosc_getNextInt32(msg);
         if (state == 1) {
-            tsf_note_off(TinySoundFont, tsfPreset, pitch);
-            tsf_note_on(TinySoundFont, tsfPreset, pitch, 0.8f);
+            SFSynth::noteOn(pitch + octaveShift * 12, 100);
+            if (looperListening) {
+                looper->startRec();
+                looperListening = false;
+            }
+            targetFrequency = (float)(pow(2, ((float)(pitch + octaveShift * 12)-69)/12) * 440);
         }
         else {
-            tsf_note_off(TinySoundFont, tsfPreset, pitch);
+            SFSynth::noteOff(pitch + octaveShift * 12);
         }
+    }
+    else if (address == "rec") {
+        int state = tosc_getNextInt32(msg);
+        int directRec = tosc_getNextInt32(msg);
+        if (state == 1) {
+            if (directRec == 1) {
+                looperListening = false;
+                looper->startRec();
+            }
+            else looperListening = true;
+        }
+        else {
+            looperListening = false;
+            looper->stopRec();
+        }
+    }
+    else if (address == "instrument") {
+        int bank = tosc_getNextInt32(msg);
+        int instrument = tosc_getNextInt32(msg);
+        SFSynth::setPreset(bank, instrument);
+    }
+    else if (address == "looperchannel") {
+        int chNum = tosc_getNextInt32(msg);
+        looper->setActiveChannel(chNum);
+    }
+    else if (address == "solochannel") {
+        int chNum = tosc_getNextInt32(msg);
+        bool solo = tosc_getNextInt32(msg) == 1;
+        looper->setChannelSolo(chNum, solo);
+    }
+    else if (address == "getwidgets") {
+        osc->sendJson(looper->getWidgetJSON().c_str());
+    }
+    else if (address == "updatezone") {
+        string zone = tosc_getNextString(msg);
+        float value = tosc_getNextFloat(msg);
+        float* zonePtr = (float*)stol(zone);
+        *zonePtr = value;
+    }
+    else if (address == "getfaustcode") {
+        int channel = tosc_getNextInt32(msg);
+        string code = fileManager->getFaustCode(channel);
+        osc->sendFaustCode(channel, code.c_str());
+    }
+    else if (address == "writefaustcode") {
+        int channel = tosc_getNextInt32(msg);
+        string code = tosc_getNextString(msg);
+        fileManager->writeFaustCode(channel, code);
+        if (looper->reloadChannelDSP(channel)) osc->sendFaustAck();
+    }
+    else if (address == "vocoderswitch") {
+        bool state = tosc_getNextInt32(msg) == 1;
+        vocoder->switchState(state);
+        vocoderEnabled = state;
+    }
+    else if (address == "getinstruments") {
+        json instruments = SFSynth::getInstruments();
+        osc->sendInstruments(instruments.dump());
     }
 }
 
+
+
+
 int main() {
 
-    osc.setCallback(processOscMsg);
-
-    // Load TSF
+    // Audio parameters
     unsigned int sampleRate = 44100;
-    unsigned int gainDb = 0;
-    TinySoundFont = tsf_load_filename("omega.sf2");
-    tsf_set_output(TinySoundFont, TSF_STEREO_UNWEAVED, sampleRate, gainDb);
-    for (int i = 0; i < 128; i++) {
-        sustained[i] = 0;
-    }
+    unsigned int bufferFrames = 1024;
 
-    // Initialize realtime audio thread
+    SFSynth::init(sampleRate * 2, bufferFrames);
+    osc = new OSC(oscCallback);
+    looper = new Looper(osc);
+    vocoder = new Vocoder();
+//    vocoder2 = new Vocoder();
+//    vocoder3 = new Vocoder();
+    pitchDetector = new PitchDetector(sampleRate, 2048);
+    fileManager = new FileManager();
+    audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::UNIX_JACK);
+    // Emit updated wiget zones
+    osc->sendJson(looper->getWidgetJSON().c_str());
 
-    RtAudio dac = RtAudio(RtAudio::UNIX_JACK);
-    if ( dac.getDeviceCount() < 1 ) {
-        std::cout << "\nNo audio devices found!\n";
-        exit( 0 );
-    }
-    cout << endl << dac.getDeviceCount() << " devices found" << endl;
-
-    printCurrentAudioDriver(dac);
-
-//    probeDevices(dac);
-
-    RtAudio::StreamParameters parametersOut;
-    parametersOut.deviceId = dac.getDefaultOutputDevice();
-    parametersOut.nChannels = 2;
-    parametersOut.firstChannel = 0;
-
-    RtAudio::StreamParameters parametersIn;
-    parametersIn.deviceId = dac.getDefaultInputDevice();
-    parametersIn.nChannels = 2;
-    parametersIn.firstChannel = 0;
-
-    RtAudio::StreamOptions options;
-    options.flags = RTAUDIO_SCHEDULE_REALTIME;
-//    options.flags = RTAUDIO_NONINTERLEAVED;
-
-
-    double data[2];
-    try {
-        dac.openStream( &parametersOut, &parametersIn, RTAUDIO_FLOAT64,
-                        sampleRate, &bufferFrames, &render, (void *)&data, &options );
-        dac.startStream();
-    }
-    catch ( RtAudioError& e ) {
-        e.printMessage();
-        exit( 0 );
-    }
-
-    // Initialize looper
-    looper = Looper();
-
-    // Initialize vocoder
-    vocoder = Vocoder();
 
     // Initialize MIDI listener
+#ifdef MIDI_ENABLED
+    RtMidiIn *midiIn = new RtMidiIn();
+    // Check available ports.
+    unsigned int nPorts = midiIn->getPortCount();
+    if ( nPorts == 0 ) {
+        std::cout << "No ports available!\n";
+    }
+    else {
 
+        std::cout << nPorts << " ports available!\n";
 
-//    RtMidiIn *midiIn = new RtMidiIn();
-//    // Check available ports.
-//    unsigned int nPorts = midiIn->getPortCount();
-//    if ( nPorts == 0 ) {
-//        std::cout << "No ports available!\n";
-//    }
-//    else {
-//
-//        std::cout << nPorts << " ports available!\n";
-//
-//        midiIn->openPort( 1 );
-//        // Set our callback function.  This should be done immediately after
-//        // opening the port to avoid having incoming messages written to the
-//        // queue.
-//        midiIn->setCallback( &midiCallback );
-//        // Ignore sysex, timing, or active sensing messages:
-//        midiIn->ignoreTypes( true, true, true );
-//    }
+        midiIn->openPort( 1 );
+        // Set our callback function.  This should be done immediately after
+        // opening the port to avoid having incoming messages written to the
+        // queue.
+        midiIn->setCallback( &midiCallback );
+        // Ignore sysex, timing, or active sensing messages:
+        midiIn->ignoreTypes( true, true, true );
+    }
+#endif
+
 
     // Quit scenario
 
     char input;
-    std::cout << "\nPlaying ... press <enter> to quit.\n";
+    std::cout << "\nRunning ... press <enter> to quit.\n";
     std::cin.get( input );
-    try {
-        // Stop the stream
-        dac.stopStream();
-    }
-    catch (RtAudioError& e) {
-        e.printMessage();
-    }
-    if ( dac.isStreamOpen() ) dac.closeStream();
 
-    osc.closeSocket();
+    audioEngine->shutDown();
+    osc->closeSocket();
 
     return 0;
 }

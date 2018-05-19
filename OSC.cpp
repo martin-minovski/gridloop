@@ -5,19 +5,48 @@
 #include "OSC.h"
 using namespace std;
 
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/uio.h>
 
-OSC::OSC() {
+
+OSC::OSC(std::function<void(tosc_message*)> callback) {
+
+    //Set up inbound socket
     fcntl(fd, F_SETFL, O_NONBLOCK); // set the socket to non-blocking
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
     sin.sin_port = htons(4368);
     sin.sin_addr.s_addr = INADDR_ANY;
     bind(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
-    printf("tinyosc is now listening on port 4368.\n");
-};
-
-void OSC::setCallback(std::function<void(tosc_message*)> callback) {
+    printf("Listening for OSC on port 4368.\n");
     oscCallback = callback;
+
+    // Set up outbound socket
+    const char* hostnameOut = "127.0.0.1";
+    const char* portnameOut = "10295";
+    struct addrinfo hints;
+    memset(&hints,0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = 0;
+    hints.ai_flags = AI_ADDRCONFIG;
+    int err = getaddrinfo(hostnameOut, portnameOut, &hints, &addInfoOut);
+    if (err != 0) {
+        printf("Failed to resolve remote socket address. (err:%d)\n", err);
+        return;
+    }
+    // Open socket
+    fdOut = socket(addInfoOut->ai_family, addInfoOut->ai_socktype, addInfoOut->ai_protocol);
+    if (fdOut == -1) {
+        printf("Error: %s\n", strerror(errno));
+        return;
+    }
+
 }
 
 void OSC::oscListen() {
@@ -46,8 +75,47 @@ void OSC::oscListen() {
         }
     }
 }
-
 void OSC::closeSocket() {
-    // close the UDP socket
+    // close the UDP sockets
     close(fd);
+    close(fdOut);
+}
+void OSC::sendJson(const char* json) {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "json_update",
+            "s",
+            json);
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}
+void OSC::sendFaustError(const char *errorMsg) {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "faust_error",
+            "s",
+            errorMsg);
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}
+void OSC::sendFaustCode(int channel, const char *code) {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "faust_code",
+            "is",
+            channel, code);
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}
+void OSC::sendFaustAck() {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "faust_ack",
+            "");
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}
+void OSC::sendInstruments(string instruments) {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "json_instruments",
+            "s",
+            instruments.c_str());
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
 }

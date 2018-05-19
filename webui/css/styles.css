@@ -1,0 +1,224 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #666;
+
+    /* Disables pull-to-refresh but allows overscroll glow effects. */
+    overscroll-behavior-y: contain;
+}
+.grid{
+    position: relative;
+}
+.item {
+    position: absolute;
+}
+.grid-item-channel {
+    /*float: left;*/
+    width: 130px;
+    height: 300px;
+    overflow: auto;
+}
+.grid-item {
+    /*float: left;*/
+    width: 300px;
+    height: 140px;
+    position: absolute;
+}
+.grid-item-padded {
+    padding: 18px;
+    margin: 2px;
+    border: 2px solid hsla(0, 0%, 0%, 0.1);
+    border-radius: 15px;
+}
+.grid-item-padded-sm {
+    padding: 5px;
+    margin: 5px;
+    border: 1px solid hsla(0, 0%, 0%, 0.1);
+    border-radius: 4px;
+}
+.title {
+    position: relative;
+}
+.title>div {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    -webkit-transform: translateX(-50%);
+    top: -15px;
+    font-size: 14px;
+    font-weight: 100;
+}
+.instr-icon {
+    width: 20px;
+    height: 20px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    display: inline-block;
+    margin: 2px 5px 0 0;
+    cursor: pointer;
+}
+.control-icon {
+    display: inline-block;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+.fas {
+    color: #555;
+}
+#looper-ch,
+#looper-ch>select {
+    width: 40px !important;
+}
+#faust-editor-container {
+    position:fixed;
+    padding:0;
+    margin:0;
+    top:0;
+    left:0;
+    width: 100%;
+    height: 100%;
+    background:rgba(255,255,255,0.8);
+
+    /*Initially hidden*/
+    display: none;
+    z-index: 9999999999;
+}
+#faust-editor {
+    height: 80%;
+    width: 100%;
+    background:rgba(255,255,255,0);
+    /*position: absolute;*/
+}
+.rounded-widget-container>svg {
+    border-radius: 10px;
+}
+.xypad circle {
+}
+.xypad circle:after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background-color: blue;
+    position: absolute;
+    border-bottom: solid 1px #fff;
+    left: 0;
+    top: 50%;
+    z-index: 1;
+ }
+.fullscreen-icon {
+    right: 0;
+    position: fixed;
+    z-index: 9999999999;
+    margin: 5px 10px;
+    font-size: 30px;
+    cursor: pointer;
+    transition: color 200ms ease-in-out;
+}
+.fullscreen-icon>i:hover {
+    color: #888 !important;
+}
+.loop-grid-wrapper {
+    height: 100px;
+    width: 290px;
+    position: absolute;
+    left: 0;
+}
+.square {
+    background-color: green;
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border-radius: 1px;
+    text-align: center;
+    position: relative;
+    margin: 0 3px 0 2px;
+    cursor: pointer;
+
+}
+.square-label {
+    position: absolute;
+    color: white;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%) translateY(35%);
+}
+
+
+
+/*SLIDER STYLES*/
+
+html, body {
+    position: relative;
+    height: 100%;
+}
+body {
+    background: #eee;
+    font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    color:#000;
+    margin: 0;
+    padding: 0;
+}
+.swiper-container {
+    width: 100%;
+    height: 100%;
+}
+.swiper-slide {
+    text-align: center;
+    font-size: 18px;
+    background: #fff;
+    /* Center slide text vertically */
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+}
+
+.swiper-button-next, .swiper-button-prev {
+    top: 95%;
+    z-index: 999999;
+}
+
+
+.shape-rotation {
+    background-color:#c43;
+    -webkit-transform: rotate(-90deg) translateX(-90px) scale(0.5);
+    -moz-transform:rotate(-90deg) translateX(-90px) scale(0.5);
+    -ms-transform:rotate(-90deg) translateX(-90px) scale(0.5);
+    -o-transform:rotate(-90deg) translateX(-90px) scale(0.5);
+
+}
+
+.shape-rotation:hover {
+    background-color:#e64433;
+}
+
+.shape-rotation.selectedZoomTarget:hover {
+    background-color:#c43;
+}
+
+.noncentered-slide {
+    overflow-y: scroll;
+    align-items: inherit !important;
+}
+#piano>div {
+    left: -20px;
+    top: 20px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+@media (max-width: 640px) {
+    .swiper-button-next,
+    .swiper-button-prev {
+        display: none;
+    }
+
+}

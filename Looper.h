@@ -6,26 +6,34 @@
 #define RTPIANO_LOOPER_H
 
 #include <vector>
+#include "LooperClip.h"
+#include "LooperChannel.h"
+#include <string>
+#include "OSC.h"
 using namespace std;
 
-class Chunk {
-    float* left;
-    float* right;
-};
-
-class Clip {
-    vector<Chunk> chunks;
-public:
-
-};
+#define NUMBER_OF_LOOPER_CHANNELS 8
 
 class Looper {
-    bool isRecording = false;
-
+    LooperClip* recordingClip = nullptr;
+    LooperClip* masterClip = nullptr;
+    vector<LooperClip*> clips;
+    int timer = 0;
+    int activeChannel = 0;
+    LooperChannel* channels[NUMBER_OF_LOOPER_CHANNELS];
+    int numChannels = NUMBER_OF_LOOPER_CHANNELS;
 public:
-    void render(double* inputBuffer, double* outputBuffer, int bufferLength);
-    void startRecording();
-    void stopRecording();
+    Looper(OSC* osc);
+    float process(float sample);
+    void startRec();
+    void stopRec();
+    void setActiveChannel(int channel);
+    void schedule(LooperClip* clip);
+    void setChannelSolo(int ch, bool solo);
+    void setChannelVolume(int ch, float volume);
+    string getWidgetJSON();
+    bool reloadChannelDSP(int channel);
+    int getActiveChannel();
 };
 
 
