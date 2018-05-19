@@ -21,8 +21,8 @@ struct Bin
     float shiftedBy;
 };
 
-const int fftSize = 2048;
-const int hopSize = 256;
+const int fftSize = 4096;
+const int hopSize = 1024;
 const int olaSize = fftSize + hopSize;
 
 class Vocoder {

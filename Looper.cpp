@@ -30,7 +30,9 @@ float Looper::process(float sample) {
                 channelSample += clip->renderVoices();
             }
         }
-        finalSample += channels[i]->process(channelSample);
+        float liveSample = 0;
+        if (i == activeChannel) liveSample = sample;
+        finalSample += channels[i]->process(channelSample + liveSample);
     }
     return finalSample;
 }
@@ -53,6 +55,9 @@ void Looper::stopRec() {
 }
 void Looper::setActiveChannel(int channel) {
     activeChannel = channel;
+}
+int Looper::getActiveChannel() {
+    return activeChannel;
 }
 void Looper::schedule(LooperClip* clip) {
     if (clip->isMaster()) {

@@ -111,3 +111,11 @@ void OSC::sendFaustAck() {
             "");
     sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
 }
+void OSC::sendInstruments(string instruments) {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "json_instruments",
+            "s",
+            instruments.c_str());
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}

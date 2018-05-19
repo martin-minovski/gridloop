@@ -33,6 +33,7 @@ public:
     void sendFaustError(const char* errorMsg);
     void sendFaustCode(int channel, const char *code);
     void sendFaustAck();
+    void sendInstruments(string instruments);
 };
 
 

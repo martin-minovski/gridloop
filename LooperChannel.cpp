@@ -36,15 +36,15 @@ bool LooperChannel::reloadDSPFile() {
     return true;
 }
 float LooperChannel::process(float sample) {
-    float input = soloMute ? 0 : sample * volume;
+    float input = soloMute ? 0 : sample;
     float output = 0;
     if (leftChannel) {
         faustInL[0] = input;
-        output = faustOutL[0];
+        output = faustOutL[0] * volume;
     }
     else {
         faustInR[0] = input;
-        output = faustOutR[0];
+        output = faustOutR[0] * volume;
         if (faustDSP != nullptr) faustDSP->compute(bufferSize, faustIn, faustOut);
     }
     leftChannel = !leftChannel;

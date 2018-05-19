@@ -10,7 +10,7 @@ PitchDetector::PitchDetector(unsigned int sampleRate, unsigned int windowSize) {
     aubioRate = sampleRate;
     aubioInput = new_fvec(aubioHopsize);
     aubioOutput = new_fvec(1);
-    aubioPitch = new_aubio_pitch("default", aubioWindow, aubioHopsize, aubioRate);
+    aubioPitch = new_aubio_pitch("yinfft", aubioWindow, aubioHopsize, aubioRate);
 }
 void PitchDetector::process(float sample) {
     if (sampleCounter >= aubioHopsize) {

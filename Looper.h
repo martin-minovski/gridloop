@@ -33,6 +33,7 @@ public:
     void setChannelVolume(int ch, float volume);
     string getWidgetJSON();
     bool reloadChannelDSP(int channel);
+    int getActiveChannel();
 };
 
 

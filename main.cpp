@@ -12,43 +12,64 @@
 #include "SFSynth.h"
 #include "FileManager.h"
 #include "PitchDetector.h"
+#include <cmath>
 
-//#define MIDI_ENABLED
+#define MIDI_ENABLED
 
 using namespace std;
 
 Looper* looper;
 Vocoder* vocoder;
+Vocoder* vocoder2;
+Vocoder* vocoder3;
 OSC* osc;
 AudioEngine* audioEngine;
-SFSynth* sfSynth;
 FileManager* fileManager;
 PitchDetector* pitchDetector;
 
 bool looperListening = false;
+bool vocoderEnabled = false;
 
 void midiCallback( double deltatime, std::vector< unsigned char > *message, void *userData )
 {
 
+
     unsigned int nBytes = message->size();
-    for ( unsigned int i=0; i<nBytes; i++ )
-        std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
-    if ( nBytes > 0 )
-        std::cout << "stamp = " << deltatime << std::endl;
+//    for ( unsigned int i=0; i<nBytes; i++ )
+//        std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+//    if ( nBytes > 0 )
+//        std::cout << "stamp = " << deltatime << std::endl;
 
+    int pitch = message->at(1);
+    if (pitch == 1) {
+        vocoder->setBetaFactor(0.95f + ((float)message->at(2) / 1280.0f));
+    }
+    else if (pitch == 21) {
 
-    if (message->at(0) == 144) {
-        int pitch = message->at(1);
-        if (message->at(2) == 0) sfSynth->noteOff(pitch);
-        else sfSynth->noteOn(pitch, message->at(2));
+    }
+    else if (pitch == 22) {
+
+    }
+    else {
+        if (message->at(2) == 0) SFSynth::noteOff(pitch);
+        else  {
+            SFSynth::noteOn(pitch, message->at(2));
+            if (looperListening) {
+                looper->startRec();
+                looperListening = false;
+            }
+        }
     }
 
-    if (message->at(0) == 176) {
-        if (message->at(2) > 0) sfSynth->sustainOn();
-        else sfSynth->sustainOff();
-    }
+//    if (message->at(0) == 144 || message->at(0) == 158) {
+//    }
+//    if (message->at(0) == 176) {
+//        if (message->at(2) > 0) SFSynth::sustainOn();
+//        else SFSynth::sustainOff();
+//    }
 }
 
+float targetFrequency = 500;
 
 int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
            double streamTime, RtAudioStreamStatus status, void *userData) {
@@ -62,25 +83,36 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 
     float fftSample = 0;
     for (int i = 0; i < nBufferFrames * 2; i++) {
-        float tsfSample = sfSynth->getNextSample();
+        float tsfSample = SFSynth::getNextSample();
         float inputSample = (float) inBuffer[(i / 2) * 2];
-        inputSample = tsfSample;
+        inputSample += tsfSample;
 
-//        float looperSample = looper->process(tsfSample + inputSample);
-//        outBuffer[i] = tsfSample + looperSample + inputSample;
+        float looperSample = looper->process(tsfSample + inputSample);
+        outBuffer[i] = looperSample;
 
-        if (i % 2 == 0) {
-            fftSample = vocoder->processSample(inputSample);
-            pitchDetector->process(inputSample);
+        if (vocoderEnabled) {
+            if (i % 2 == 0) {
+                fftSample = vocoder->processSample(looperSample);
+//              pitchDetector->process(inputSample + fftSample);
+            }
+            outBuffer[i] += fftSample;
         }
-//        else fftSample = tsfSample;
-        outBuffer[i] = fftSample;
     }
 
-    float targetFrequency = 300;
-    float currentPitch = pitchDetector->getPitch();
-    float ratio = targetFrequency / currentPitch;
-    vocoder->setBetaFactor(ratio);
+//    targetFrequency = 196.00;
+//    float targetFrequency2 = 293.66;
+//    float targetFrequency3 = 493.88;
+//    float currentPitch = pitchDetector->getPitch();
+//
+//    float ratio = targetFrequency / currentPitch;
+//    float ratio2 = targetFrequency2 / currentPitch;
+//    float ratio3 = targetFrequency3 / currentPitch;
+//
+//    if (currentPitch > 5 && currentPitch < 2000) {
+//        vocoder->setBetaFactor(ratio);
+//        vocoder2->setBetaFactor(ratio2);
+//        vocoder3->setBetaFactor(ratio3);
+//    }
 
     osc->oscListen();
 
@@ -101,7 +133,7 @@ void oscCallback(tosc_message* msg) {
             vocoder->setBetaFactor(value);
         }
         if (type == "sfgain") {
-            sfSynth->setGain(value);
+            SFSynth::setGain(value);
         }
         if (type == "channelvolume") {
             looper->setChannelVolume(meta, value);
@@ -112,14 +144,15 @@ void oscCallback(tosc_message* msg) {
         int state = tosc_getNextInt32(msg);
         int octaveShift = tosc_getNextInt32(msg);
         if (state == 1) {
-            sfSynth->noteOn(pitch + octaveShift * 12, 100);
+            SFSynth::noteOn(pitch + octaveShift * 12, 100);
             if (looperListening) {
                 looper->startRec();
                 looperListening = false;
             }
+            targetFrequency = (float)(pow(2, ((float)(pitch + octaveShift * 12)-69)/12) * 440);
         }
         else {
-            sfSynth->noteOff(pitch + octaveShift * 12);
+            SFSynth::noteOff(pitch + octaveShift * 12);
         }
     }
     else if (address == "rec") {
@@ -140,7 +173,7 @@ void oscCallback(tosc_message* msg) {
     else if (address == "instrument") {
         int bank = tosc_getNextInt32(msg);
         int instrument = tosc_getNextInt32(msg);
-        sfSynth->setPreset(bank, instrument);
+        SFSynth::setPreset(bank, instrument);
     }
     else if (address == "looperchannel") {
         int chNum = tosc_getNextInt32(msg);
@@ -174,6 +207,11 @@ void oscCallback(tosc_message* msg) {
     else if (address == "vocoderswitch") {
         bool state = tosc_getNextInt32(msg) == 1;
         vocoder->switchState(state);
+        vocoderEnabled = state;
+    }
+    else if (address == "getinstruments") {
+        json instruments = SFSynth::getInstruments();
+        osc->sendInstruments(instruments.dump());
     }
 }
 
@@ -184,13 +222,15 @@ int main() {
 
     // Audio parameters
     unsigned int sampleRate = 44100;
-    unsigned int bufferFrames = 512;
+    unsigned int bufferFrames = 1024;
 
-    sfSynth = new SFSynth(sampleRate * 2, bufferFrames);
+    SFSynth::init(sampleRate * 2, bufferFrames);
     osc = new OSC(oscCallback);
     looper = new Looper(osc);
     vocoder = new Vocoder();
-    pitchDetector = new PitchDetector(sampleRate, 1024);
+//    vocoder2 = new Vocoder();
+//    vocoder3 = new Vocoder();
+    pitchDetector = new PitchDetector(sampleRate, 2048);
     fileManager = new FileManager();
     audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::UNIX_JACK);
     // Emit updated wiget zones

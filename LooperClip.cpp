@@ -69,3 +69,11 @@ void LooperClip::setSchedulePeriod(int period) {
 int LooperClip::getChannel() {
     return channel;
 }
+
+int LooperClip::getVariation() {
+    return variation;
+}
+
+void LooperClip::setVariation(int value) {
+    variation = value;
+}

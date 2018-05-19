@@ -66,9 +66,9 @@ float Vocoder::processSample(float &sample) {
         kiss_fft(outFFT, cpxBuffer, cpxBufferOut);
 
         // Frame-synchronous time-domain amplitude modulation for the peak-shift linear interpolation
-//        for (int n = 0; n < fftSize; n++) {
-//            cpxBufferOut[n].r = cpxBufferOut[n].r * sinf((float)M_PI * ((float)n / (float)fftSize));
-//        }
+        for (int n = 0; n < fftSize; n++) {
+            cpxBufferOut[n].r = cpxBufferOut[n].r * sinf((float)M_PI * ((float)n / (float)fftSize));
+        }
 
         // Scale and overlap-add
         for (int j = 0; j < fftSize; j++) {
@@ -99,6 +99,7 @@ bool isEmpty(kiss_fft_cpx& complex) {
 void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
 
     float localBetaFactor = gBetaFactor;
+    float localBetaSecond = gBetaFactor * 1.3333f;
 
     // Initialize
     for (int n = 0; n < fftSize; n++) {
@@ -150,12 +151,18 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
 
     // Estimate precise peak location
     for (int n = 0; n < fftSize; n++) {
-        if (nextFrame[n].peak == n) {
-            // Quadratic
-//            float d = (mag[n+1] - mag[n-1]) / (2 * (2 * mag[n] - mag[n-1] - mag[n+1]));
-            // Barycentric
-            float d = (mag[n+1] - mag[n-1]) / (mag[n] + mag[n-1] + mag[n+1]);
-            nextFrame[n].precisePeak = n + stateSwitch * d;
+
+        if (stateSwitch) {
+            if (nextFrame[n].peak == n) {
+                // Quadratic
+                float d = (mag[n+1] - mag[n-1]) / (2 * (2 * mag[n] - mag[n-1] - mag[n+1]));
+                // Barycentric
+//                float d = (mag[n+1] - mag[n-1]) / (mag[n] + mag[n-1] + mag[n+1]);
+                nextFrame[n].precisePeak = n + d;
+            }
+        }
+        else {
+            nextFrame[n].precisePeak = n;
         }
     }
 

@@ -18,6 +18,7 @@ class LooperClip {
     LooperChunk* lastChunk;
     vector<LooperVoice*> voices;
     int channel = 0;
+    int variation = 0;
     bool master = false;
     int offset = 0;
     int totalSamples = 0;
@@ -40,6 +41,8 @@ public:
     bool slaveScheduled();
     void slaveReschedule();
     int getChannel();
+    int getVariation();
+    void setVariation(int value);
 };
 
 #endif //RTPIANO_LOOPERCLIP_H
