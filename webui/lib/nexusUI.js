@@ -4507,9 +4507,9 @@
                             this.currentElement = false;
 
                             this.element.addEventListener("touchstart", function (e) {
-                                if (!$(e.target).closest('.zoomTarget').hasClass('selectedZoomTarget')) {
-                                    return;
-                                }
+                                // if (!$(e.target).closest('.zoomTarget').hasClass('selectedZoomTarget')) {
+                                //     return;
+                                // }
                                 console.log("touchstart");
                                 var element = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                                 var key = _this.keys[element.index];
@@ -4521,9 +4521,9 @@
                             });
 
                             this.element.addEventListener("touchmove", function (e) {
-                                if (!$(e.target).closest('.zoomTarget').hasClass('selectedZoomTarget')) {
-                                    return;
-                                }
+                                // if (!$(e.target).closest('.zoomTarget').hasClass('selectedZoomTarget')) {
+                                //     return;
+                                // }
                                 var element = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                                 var key = _this.keys[element.index];
                                 if (element.index !== _this.currentElement) {
@@ -4541,9 +4541,9 @@
                             });
 
                             this.element.addEventListener("touchend", function (e) {
-                                if (!$(e.target).closest('.zoomTarget').hasClass('selectedZoomTarget')) {
-                                    return;
-                                }
+                                // if (!$(e.target).closest('.zoomTarget').hasClass('selectedZoomTarget')) {
+                                //     return;
+                                // }
                                 // no touches to calculate because none remaining
                                 // var key = _this.keys[_this.currentElement];
                                 // key.up();

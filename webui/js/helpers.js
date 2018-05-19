@@ -1,7 +1,8 @@
 
 function getCurrentScale() {
-    var body = document.querySelector('.zoomContainer');
-    return body.getBoundingClientRect().width / body.offsetWidth;
+    // var body = document.querySelector('.zoomContainer');
+    // return body.getBoundingClientRect().width / body.offsetWidth;
+    return 1;
 }
 
 function makeId() {

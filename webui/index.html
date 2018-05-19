@@ -2,64 +2,103 @@
 <html>
 
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=2.0, user-scalable=false">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=false">
     <meta charset="utf-8">
     <title>WebLoopStation</title>
 
     <link rel="stylesheet" href="fontawesome/css/fontawesome-all.css">
+    <link rel="stylesheet" href="lib/swiper.css">
     <link rel="stylesheet" href="css/styles.css">
+
 </head>
 
+
 <body>
-    <div style="position: fixed; left: 0; bottom: 0; padding: 20px; z-index: 100000;">
-        <div id="looper-ch"></div>
-        <br />
-        <div id="looper-rec"></div>
-    </div>
-    <div class="zoomViewport" style="height: 100vh;">
-        <div class="grid zoomContainer" id="mainContainer">
-            <div class="grid-item grid-item-padded zoomTarget" id="pianoZoomTarget">
-                <div style="position: absolute; margin-top: -15px;">
-                    <div class="instr-icon" bank="0" instrument="0" octaveShift="0" style="background-image: url('icons/piano.svg')"></div>
-                    <div class="instr-icon" bank="0" instrument="32" octaveShift="-2" style="background-image: url('icons/guitar.svg')"></div>
-                    <div class="instr-icon" bank="128" instrument="8" octaveShift="-1" style="background-image: url('icons/drum.svg');"></div>
-                    <div class="instr-icon" bank="0" instrument="13" octaveShift="0" style="background-image: url('icons/xylo.svg');"></div>
-                    <span>
-                        <div style="position: relative; display: inline-block;">
-                            <div style="position: absolute; margin-top: -24px; font-size: 10px; margin-left: 1px;">
-                                OCTAVE
-                            </div>
-                        </div>
-                        <div class="oct-control control-icon" meta="-">
-                            <i class="fas fa-minus"></i>
-                        </div>
-                        <div class="oct-control control-icon" meta="+">
-                            <i class="fas fa-plus"></i>
-                        </div>
-                    </span>
-                    <div slider="vocoder" min="0" max="2" value="1" step="0.001" sizeX="100" sizeY="20" style="display:inline-block"></div>
-                    <div id="vocoder-switch" style="display:inline-block"></div>
-                </div>
-                <br />
-                <div id="piano"></div>
-            </div>
-            <div class="grid-item grid-item-padded zoomTarget">
-                <div class="title"><div style="font-size: 10px;">Channel levels</div></div>
-                <div id="looper-channel-holder"></div>
-            </div>
-        </div>
+
+    <div id="fullscreen" onclick="goFullscreen()" class="fullscreen-icon">
+        <i class="fas fa-expand"></i>
     </div>
 
+
     <div id="faust-editor-container">
-        <h1 style="text-align: center">
-            Editing DSP of channel <span style="font-weight: 600" id="faust-channel-span"></span>
+        <h1 style="text-align: center; margin: 10px;">
+            DSP <span style="font-weight: 600" id="faust-channel-span"></span>
         </h1>
-        <div style="position:fixed; right: 20px; top: 20px;">
+        <div style="position:fixed; left: 23px; top: 14px;">
             <i class="fas fa-check fa-2x" style="cursor: pointer" onclick="faustSave()"></i>
             &nbsp;&nbsp;&nbsp;
             <i class="fas fa-times fa-2x" style="cursor: pointer" onclick="faustClose()"></i>
         </div>
         <div id="faust-editor"></div>
+    </div>
+
+    <!-- Swiper -->
+    <div class="swiper-container">
+        <div class="swiper-wrapper">
+            <div class="swiper-slide">
+                Welcome
+            </div>
+            <div class="swiper-slide">
+                <div class="grid" id="masterContainer">
+                    <div style="background-color: #f1f1f1" class="grid-item item grid-item-padded">
+                        <div style="position: absolute; margin-top: -15px;">
+                            <!--<div class="instr-icon" bank="0" instrument="0" octaveShift="0" style="background-image: url('icons/piano.svg')"></div>-->
+                            <!--<div class="instr-icon" bank="0" instrument="32" octaveShift="-2" style="background-image: url('icons/guitar.svg')"></div>-->
+                            <!--<div class="instr-icon" bank="128" instrument="8" octaveShift="-1" style="background-image: url('icons/drum.svg');"></div>-->
+                            <!--<div class="instr-icon" bank="0" instrument="13" octaveShift="0" style="background-image: url('icons/xylo.svg');"></div>-->
+
+                            <div id="instrument-select" style="display: inline-block; font-size:18px;"></div>
+
+                            <span style="position:relative; top: -1px;">
+                                <div style="position: relative; display: inline-block;">
+                                    <div style="position: absolute; margin-top: 2px; font-size: 10px; margin-left: 1px;">
+                                        OCTAVE
+                                    </div>
+                                </div>
+                                <div class="oct-control control-icon" meta="-">
+                                    <i class="fas fa-minus"></i>
+                                </div>
+                                <div class="oct-control control-icon" meta="+">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                            </span>
+                            <div slider="vocoder" min="0" max="2" value="1" step="0.001" sizeX="100" sizeY="20" style="display:inline-block"></div>
+                            <div id="vocoder-switch" style="display:inline-block"></div>
+                        </div>
+                        <div class="zoomViewport">
+                            <div id="piano"></div>
+                        </div>
+                    </div>
+                    <div class="grid-item item grid-item-padded" style="background-color: #f5f5f5;">
+                        <div class="title"><div style="font-size: 10px;">Channel levels</div></div>
+                        <div id="looper-channel-holder"></div>
+                    </div>
+                    <div class="grid-item item grid-item-padded" style="background-color: #f1f1f1; color: white;">
+
+                        <div style="position: absolute; right: 6px; top: 0;">
+                            <br />
+                            <div id="looper-rec" style="margin-bottom: 8px"></div>
+                            <div id="looper-clear">
+                                <i class="fas fa-2x fa-ban"></i>
+                            </div>
+                        </div>
+                        <div class="title"><div style="font-size: 10px;">Loop Grid</div></div>
+                        <div class="loop-grid-wrapper">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="swiper-slide noncentered-slide">
+                <div class="grid" id="mainContainer" style="color: white"></div>
+            </div>
+        </div>
+
+        <!-- Add Arrows -->
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+
+        <!-- Add Pagination -->
+        <div class="swiper-pagination"></div>
     </div>
 </body>
 
@@ -68,10 +107,14 @@
 <script src="lib/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="lib/jquery.js"></script>
 <script src="lib/zoomooz.js"></script>
+
 <script src="lib/masonry.js"></script>
+
 <script src="lib/nexusUI.js"></script>
 
 <script src="js/helpers.js"></script>
 <script src="js/ui.js"></script>
+
+<script src="lib/swiper.js"></script>
 
 </html>
