@@ -57,3 +57,12 @@ void LooperChannel::setVolume(float volume) {
 std::vector<LooperWidget*>* LooperChannel::getWidgets() {
     return faustUI.getWidgets();
 }
+void LooperChannel::setVariation(int variation) {
+    this->variation = variation;
+}
+int LooperChannel::getVariation() {
+    return variation;
+}
+float LooperChannel::getVolume() {
+    return volume;
+}

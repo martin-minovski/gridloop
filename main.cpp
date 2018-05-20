@@ -168,6 +168,9 @@ void oscCallback(tosc_message* msg) {
         else {
             looperListening = false;
             looper->stopRec();
+
+            // Send clip update to frontend
+            osc->sendClipSummary(looper->getClipSummary().dump());
         }
     }
     else if (address == "instrument") {
@@ -177,7 +180,16 @@ void oscCallback(tosc_message* msg) {
     }
     else if (address == "looperchannel") {
         int chNum = tosc_getNextInt32(msg);
+        int varNum = tosc_getNextInt32(msg);
         looper->setActiveChannel(chNum);
+        looper->setActiveVariation(varNum);
+        osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
+    }
+    else if (address == "clearchannel") {
+        int chNum = tosc_getNextInt32(msg);
+        int varNum = tosc_getNextInt32(msg);
+        looper->clearChannel(chNum, varNum);
+        osc->sendClipSummary(looper->getClipSummary().dump());
     }
     else if (address == "solochannel") {
         int chNum = tosc_getNextInt32(msg);
@@ -210,13 +222,18 @@ void oscCallback(tosc_message* msg) {
         vocoderEnabled = state;
     }
     else if (address == "getinstruments") {
-        json instruments = SFSynth::getInstruments();
-        osc->sendInstruments(instruments.dump());
+        osc->sendInstruments(SFSynth::getInstruments().dump());
+    }
+    else if (address == "getclipsummary") {
+        osc->sendClipSummary(looper->getClipSummary().dump());
+    }
+    else if (address == "getchannelsummary") {
+        osc->sendChannelSummary(looper->getChannelSummary().dump());
+    }
+    else if (address == "getactive") {
+        osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
     }
 }
-
-
-
 
 int main() {
 
@@ -233,8 +250,6 @@ int main() {
     pitchDetector = new PitchDetector(sampleRate, 2048);
     fileManager = new FileManager();
     audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::UNIX_JACK);
-    // Emit updated wiget zones
-    osc->sendJson(looper->getWidgetJSON().c_str());
 
 
     // Initialize MIDI listener
@@ -249,16 +264,24 @@ int main() {
 
         std::cout << nPorts << " ports available!\n";
 
-        midiIn->openPort( 1 );
+        midiIn->openPort(1);
         // Set our callback function.  This should be done immediately after
         // opening the port to avoid having incoming messages written to the
         // queue.
-        midiIn->setCallback( &midiCallback );
+        midiIn->setCallback(&midiCallback);
         // Ignore sysex, timing, or active sensing messages:
-        midiIn->ignoreTypes( true, true, true );
+        midiIn->ignoreTypes(true, true, true);
     }
 #endif
 
+
+    // Update front-end on boot
+
+    osc->sendJson(looper->getWidgetJSON().c_str());
+    osc->sendInstruments(SFSynth::getInstruments().dump());
+    osc->sendClipSummary(looper->getClipSummary().dump());
+    osc->sendChannelSummary(looper->getChannelSummary().dump());
+    osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
 
     // Quit scenario
 

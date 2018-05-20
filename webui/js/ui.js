@@ -106,6 +106,46 @@ function faustClose() {
 
 var socket = io('/');
 socket.on('cppinput', function (data) {
+    if (data.address === 'json_channelsummary') {
+        for (var i = 0; i < 8; i++) {
+            for (var j = 0; j < 4; j++) {
+                gridItems[i][j].element.find('.square-variation').hide();
+            }
+        }
+        var channels = JSON.parse(data.args[0].value);
+        if (channels) channels.forEach(function(channel, index) {
+            gridItems[index][channel.variation].element.find('.square-variation').show();
+        });
+    }
+    if (data.address === 'active') {
+        var channel = data.args[0].value;
+        var variation = data.args[1].value;
+        gridItems[activeChannel][activeVariation].element.css('border-radius', '0px').find('.square-cover').css('border-radius', '0px');
+        activeChannel = channel;
+        activeVariation = variation;
+        gridItems[channel][variation].element.css('border-radius', '100px').find('.square-cover').css('border-radius', '100px');
+    }
+    if (data.address === 'json_clipsummary') {
+        for (var i = 0; i < 8; i++) {
+            for (var j = 0; j < 4; j++) {
+                gridItems[i][j].element.find('.square-cover').show();
+                gridItems[i][j].element.find('.square-master').hide();
+                gridItems[i][j].element.find('.square-counter').html('');
+                gridItems[i][j].clipCount = 0;
+            }
+        }
+        var clips = JSON.parse(data.args[0].value);
+        if (clips) clips.forEach(function(clip) {
+            var channel = clip.channel;
+            var variation = clip.variation;
+            var length = clip.length;
+            var master = clip.master;
+            gridItems[channel][variation].clipCount++;
+            gridItems[channel][variation].element.find('.square-counter').html(gridItems[channel][variation].clipCount);
+            gridItems[channel][variation].element.find('.square-cover').hide();
+            if (master) gridItems[channel][variation].element.find('.square-master').show();
+        });
+    }
     if (data.address === 'faust_ack') {
         if (!saveRequested) return;
         saveRequested = false;
@@ -136,7 +176,7 @@ socket.on('cppinput', function (data) {
             faustWidgets[widget.looperChannel][widget.name][widget.axis] = widget;
         });
 
-        console.log("Widgets array: ", faustWidgets);
+        // console.log("Widgets array: ", faustWidgets);
 
         for (var i = 0; i < looperChannels; i++) {
             var widgetContainer = $('#widget-container-' + i);
@@ -494,7 +534,7 @@ $(document).ready(function() {
 
     var vocoderSwitch = new Nexus.Toggle('#vocoder-switch', {
         'size': [20, 20],
-        'state': true
+        'state': false
     });
     vocoderSwitch.on('change',function(value) {
         socket.emit('ui', {
@@ -516,10 +556,14 @@ $(document).ready(function() {
         // if (i % 8 === 0 && i !== 0) {
         //     wrapper.append($('<br />'));
         // }
+        var squareChar = thisVariation === 0 ? 'X' : String.fromCharCode(64 + thisVariation);
         var square = $(`
         <div class="square" onclick="activateChannel(`+ thisChannel + ',' + thisVariation + `);">
-            <div class="square-label">` + String.fromCharCode(65 + thisVariation) + `</div>
-            <div class="square-cover" style="position: absolute; width: 100%; height: 100%; opacity: 0.5; background-color: white;"></div>
+            <div class="square-label">` + squareChar + `</div>
+            <div class="square-cover"></div>
+            <div class="square-counter"></div>
+            <div class="square-master">M</div>
+            <div class="square-variation"></div>
         </div>
         `);
         square.css('background-color', channelColors[thisChannel]);
@@ -539,10 +583,15 @@ $(document).ready(function() {
         }
     });
 
+    getClipSummary();
+    getChannelSummary();
+    getActive();
+
     // Document Load Tail
 });
 
 var gridItems = [];
+
 for (var i = 0; i < 8; i++) {
     gridItems[i] = [];
     for (var j = 0; j < 4; j++) {
@@ -552,8 +601,23 @@ for (var i = 0; i < 8; i++) {
     }
 }
 
+var activeChannel = 0;
+var activeVariation = 0;
 function activateChannel(channel, variation) {
-    console.log("Activating", channel, variation);
+    socket.emit('ui', {
+        address: 'looperchannel',
+        args: [
+            {
+                type: 'integer',
+                value: channel
+            },
+            {
+                type: 'integer',
+                value: variation
+            }
+        ]
+    });
+    getChannelSummary();
 }
 
 // Prevent unwanted refresh on mobile
@@ -588,4 +652,38 @@ function goFullscreen() {
         i.msRequestFullscreen();
     }
     $('.zoomContainer').trigger( "click" );
+}
+
+function getClipSummary() {
+    socket.emit('ui', {
+        address: 'getclipsummary',
+        args: []
+    });
+}
+function getChannelSummary() {
+    socket.emit('ui', {
+        address: 'getchannelsummary',
+        args: []
+    });
+}
+function getActive() {
+    socket.emit('ui', {
+        address: 'getactive',
+        args: []
+    });
+}
+function clearClips() {
+    socket.emit('ui', {
+        address: 'clearchannel',
+        args: [
+            {
+                type: 'integer',
+                value: activeChannel
+            },
+            {
+                type: 'integer',
+                value: activeVariation
+            }
+        ]
+    });
 }

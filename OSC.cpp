@@ -119,3 +119,27 @@ void OSC::sendInstruments(string instruments) {
             instruments.c_str());
     sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
 }
+void OSC::sendClipSummary(string json) {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "json_clipsummary",
+            "s",
+            json.c_str());
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}
+void OSC::sendChannelSummary(string json) {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "json_channelsummary",
+            "s",
+            json.c_str());
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}
+void OSC::sendActive(int channel, int variation) {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "active",
+            "ii",
+            channel, variation);
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}

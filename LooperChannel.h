@@ -15,6 +15,7 @@
 
 class LooperChannel {
     int id;
+    int variation = 0;
     float volume = 1.0f;
     OSC* osc;
     // Faust
@@ -37,6 +38,9 @@ public:
     void setVolume(float volume);
     std::vector<LooperWidget*>* getWidgets();
     bool reloadDSPFile();
+    void setVariation(int variation);
+    int getVariation();
+    float getVolume();
 };
 
 

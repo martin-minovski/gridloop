@@ -18,6 +18,7 @@ public:
     LooperVoice(LooperClip *clip);
     bool finished();
     float getNextSample();
+    void fastForward(int samples);
 };
 
 

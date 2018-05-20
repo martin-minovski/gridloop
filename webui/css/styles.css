@@ -107,15 +107,19 @@ body {
  }
 .fullscreen-icon {
     right: 0;
+    top: 0;
     position: fixed;
     z-index: 9999999999;
     margin: 5px 10px;
     font-size: 30px;
     cursor: pointer;
+}
+.fullscreen-icon>i {
+    color: #777;
     transition: color 200ms ease-in-out;
 }
 .fullscreen-icon>i:hover {
-    color: #888 !important;
+    color: #999 !important;
 }
 .loop-grid-wrapper {
     height: 100px;
@@ -134,15 +138,59 @@ body {
     margin: 0 3px 0 2px;
     cursor: pointer;
 
+    -moz-transition: all .5s;
+    -o-transition: all .5s;
+    -webkit-transition: all .5s;
+    transition: all .5s;
 }
 .square-label {
     position: absolute;
     color: white;
     position: absolute;
     left: 50%;
-    transform: translateX(-50%) translateY(35%);
+    transform: translateX(-50%) translateY(26%);
 }
+.square-cover {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0.65;
+    background-color: black;
+    z-index: 10;
 
+    -moz-transition: all .5s;
+    -o-transition: all .5s;
+    -webkit-transition: all .5s;
+    transition: all .5s;
+}
+.square-counter{
+    position: absolute;
+    z-index: 9;
+    font-size: 12px;
+    right: 2px;
+    bottom: 1px;
+}
+.square-master{
+    position: absolute;
+    z-index: 9;
+    font-size: 12px;
+    left: -2px;
+    bottom: -3px;
+    background-color: red;
+    padding: 1px;
+    display: none;
+    border-radius: 1px;
+}
+.square-variation{
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 7px solid #fff;
+    display: none;
+    z-index: 11;
+}
 
 
 /*SLIDER STYLES*/
@@ -220,5 +268,16 @@ body {
     .swiper-button-prev {
         display: none;
     }
+}
 
+#instrument-select>select {
+    border-radius: 7px;
+}
+
+.clear-clips-icon {
+    cursor: pointer;
+    transition: .5s ease-in-out;
+}
+.clear-clips-icon:hover {
+    color: #777;
 }

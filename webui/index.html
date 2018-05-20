@@ -14,12 +14,6 @@
 
 
 <body>
-
-    <div id="fullscreen" onclick="goFullscreen()" class="fullscreen-icon">
-        <i class="fas fa-expand"></i>
-    </div>
-
-
     <div id="faust-editor-container">
         <h1 style="text-align: center; margin: 10px;">
             DSP <span style="font-weight: 600" id="faust-channel-span"></span>
@@ -37,6 +31,11 @@
         <div class="swiper-wrapper">
             <div class="swiper-slide">
                 Welcome
+
+                <div id="fullscreen" onclick="goFullscreen()" class="fullscreen-icon">
+                    <i class="fas fa-expand"></i>
+                </div>
+
             </div>
             <div class="swiper-slide">
                 <div class="grid" id="masterContainer">
@@ -79,7 +78,7 @@
                             <br />
                             <div id="looper-rec" style="margin-bottom: 8px"></div>
                             <div id="looper-clear">
-                                <i class="fas fa-2x fa-ban"></i>
+                                <i class="fas fa-2x fa-ban clear-clips-icon" onclick="clearClips()"></i>
                             </div>
                         </div>
                         <div class="title"><div style="font-size: 10px;">Loop Grid</div></div>
