@@ -13,6 +13,11 @@ class LooperChunk {
     float samples[CHUNK_SIZE];
     LooperChunk* nextChunk = nullptr;
     LooperChunk* prevChunk = nullptr;
+
+    // Faust widget automation
+    int zoneWriter = 0;
+    long zonePointers[CHUNK_SIZE];
+    float zoneValues[CHUNK_SIZE];
 public:
     LooperChunk();
     bool isFull();
@@ -23,6 +28,9 @@ public:
     int getWriter();
     int getSize();
     LooperChunk* getNext();
+
+    void writeZone(long pointer, float value);
+    void runWidgetAutomation(int index);
 };
 
 

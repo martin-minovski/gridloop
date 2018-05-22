@@ -47,6 +47,7 @@ float LooperClip::renderVoices() {
             delete voice;
         }
         else {
+            voice->runWidgetAutomation();
             result += voice->getNextSample();
             ++voiceIt;
         }
@@ -93,4 +94,7 @@ void LooperClip::purge() {
         voiceIt = voices.erase(voiceIt);
         delete voice;
     }
+}
+void LooperClip::storeWidgetAutomation(long pointer, float value) {
+    lastChunk->writeZone(pointer, value);
 }

@@ -34,3 +34,6 @@ void LooperVoice::fastForward(int samples) {
         getNextSample();
     }
 }
+void LooperVoice::runWidgetAutomation() {
+    vChunk->runWidgetAutomation(vSample);
+}

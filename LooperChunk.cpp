@@ -7,6 +7,8 @@
 LooperChunk::LooperChunk() {
     for (int i = 0; i < size; i++) {
         samples[i] = 0;
+        zonePointers[i] = 0;
+        zoneValues[i] = 0;
     }
 }
 bool LooperChunk::isFull() {
@@ -32,4 +34,17 @@ int LooperChunk::getSize() {
 }
 LooperChunk* LooperChunk::getNext() {
     return nextChunk;
+}
+
+// Faust widget automation
+
+void LooperChunk::writeZone(long pointer, float value) {
+    zonePointers[zoneWriter] = pointer;
+    zoneValues[zoneWriter++] = value;
+}
+void LooperChunk::runWidgetAutomation(int index) {
+    if (zonePointers[index] != 0) {
+        auto zonePtr = (float*)zonePointers[index];
+        *zonePtr = zoneValues[index];
+    }
 }

@@ -191,3 +191,8 @@ void Looper::clearChannel(int chNum, int varNum) {
         }
     }
 }
+void Looper::storeWidgetAutomation(long pointer, float value) {
+    if (recordingClip) {
+        recordingClip->storeWidgetAutomation(pointer, value);
+    }
+}

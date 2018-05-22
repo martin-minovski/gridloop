@@ -19,6 +19,7 @@ public:
     bool finished();
     float getNextSample();
     void fastForward(int samples);
+    void runWidgetAutomation();
 };
 
 

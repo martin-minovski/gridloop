@@ -196,10 +196,12 @@ void oscCallback(tosc_message* msg) {
         osc->sendJson(looper->getWidgetJSON().c_str());
     }
     else if (address == "updatezone") {
-        string zone = tosc_getNextString(msg);
-        float value = tosc_getNextFloat(msg);
-        float* zonePtr = (float*)stol(zone);
-        *zonePtr = value;
+        string zoneString = tosc_getNextString(msg);
+        float zoneValue = tosc_getNextFloat(msg);
+        long zonePointer = stol(zoneString);
+        looper->storeWidgetAutomation(zonePointer, zoneValue);
+        float* zone = (float*)zonePointer;
+        *zone = zoneValue;
     }
     else if (address == "getfaustcode") {
         int channel = tosc_getNextInt32(msg);
