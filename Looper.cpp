@@ -11,10 +11,11 @@ using json = nlohmann::json;
 
 using namespace std;
 
-Looper::Looper(OSC* osc) {
+Looper::Looper(OSC* osc, unsigned int sampleRate) {
     for (int i = 0; i < numChannels; i++) {
         channels[i] = new LooperChannel(i, osc);
     }
+    this->sampleRate = sampleRate;
 }
 float Looper::process(float sample) {
     if (recordingClip) {
@@ -61,7 +62,20 @@ void Looper::stopRec() {
             recordingClip->slaveScheduleTick();
         }
     }
-    else masterClip = recordingClip;
+    else {
+        masterClip = recordingClip;
+
+        // Update all sync'd widgets
+        int length = masterClip->getTotalSamples();
+        for (int i = 0; i < numChannels; i++) {
+            std::vector<LooperWidget*>* widgets = channels[i]->getWidgets();
+            for (auto widget : (*widgets)) {
+                if (widget->isSync()) {
+                    widget->setValue(length / 2); // Divide by 2 channels
+                }
+            }
+        }
+    }
     clips.push_back(recordingClip);
     recordingClip = nullptr;
 }
@@ -118,6 +132,7 @@ string Looper::getWidgetJSON() {
     for (int i = 0; i < numChannels; i++) {
         std::vector<LooperWidget*>* widgets = channels[i]->getWidgets();
         for (auto widget : (*widgets)) {
+//            if (widget->isSync()) continue; // Don't include sync widgets
             result.push_back(widget->getJson());
         }
     }

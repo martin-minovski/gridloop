@@ -83,7 +83,7 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         float inputSample = (float) inBuffer[(i / 2) * 2];
         inputSample += tsfSample;
 
-        float looperSample = looper->process(tsfSample + inputSample);
+        float looperSample = looper->process(inputSample);
         outBuffer[i] = looperSample;
 
         if (vocoderEnabled) {
@@ -238,7 +238,7 @@ int main() {
 
     SFSynth::init(sampleRate * 2, 256);
     osc = new OSC(oscCallback);
-    looper = new Looper(osc);
+    looper = new Looper(osc, sampleRate);
     vocoder = new Vocoder();
 //    vocoder2 = new Vocoder();
 //    vocoder3 = new Vocoder();

@@ -288,6 +288,12 @@ socket.on('cppinput', function (data) {
                     styllize(nexusUiWidget);
                     $('#' + widgetID).css('margin-left', '40px');
                 }
+                else if (axisX.type === 'sync') {
+                    $('#' + widgetID).html("SYNC<br /><br />")
+                        .css('font-weight', '600')
+                        .css('font-size', '14px')
+                        .css('margin-bottom', '-8px');
+                }
 
             }
         }

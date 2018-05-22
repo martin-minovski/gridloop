@@ -34,6 +34,8 @@ public:
     void setAxis(const char* axis);
     void printData();
     json getJson();
+    bool isSync();
+    void setValue(float value);
 };
 
 

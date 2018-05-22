@@ -49,3 +49,10 @@ json LooperWidget::getJson() {
     };
     return result;
 }
+bool LooperWidget::isSync() {
+    const char* syncType = "sync";
+    return strcmp(type, syncType) == 0;
+}
+void LooperWidget::setValue(float value) {
+    *zone = value;
+}

@@ -25,8 +25,9 @@ class Looper {
     int activeVariation = 0;
     LooperChannel* channels[NUMBER_OF_LOOPER_CHANNELS];
     int numChannels = NUMBER_OF_LOOPER_CHANNELS;
+    unsigned int sampleRate;
 public:
-    Looper(OSC* osc);
+    Looper(OSC* osc, unsigned int sampleRate);
     float process(float sample);
     void startRec();
     void stopRec();
