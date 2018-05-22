@@ -25,9 +25,10 @@ class LooperClip {
     int schedulePeriod = 0;
     int scheduleCountdown = 0;
 public:
-    LooperClip(int channel, bool master, int offset);
+    LooperClip(int channel, int variation, bool master, int offset);
     void writeSample(float sample);
     void launch();
+    void launch(int fastForward);
     LooperChunk* getFirstChunk();
     bool isLastChunk(LooperChunk* chunk);
     float renderVoices();
@@ -43,6 +44,7 @@ public:
     int getChannel();
     int getVariation();
     void setVariation(int value);
+    void purge();
 };
 
 #endif //RTPIANO_LOOPERCLIP_H

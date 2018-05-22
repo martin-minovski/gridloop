@@ -10,6 +10,8 @@
 #include "LooperChannel.h"
 #include <string>
 #include "OSC.h"
+#include "json.hpp"
+using json = nlohmann::json;
 using namespace std;
 
 #define NUMBER_OF_LOOPER_CHANNELS 8
@@ -20,6 +22,7 @@ class Looper {
     vector<LooperClip*> clips;
     int timer = 0;
     int activeChannel = 0;
+    int activeVariation = 0;
     LooperChannel* channels[NUMBER_OF_LOOPER_CHANNELS];
     int numChannels = NUMBER_OF_LOOPER_CHANNELS;
 public:
@@ -28,12 +31,17 @@ public:
     void startRec();
     void stopRec();
     void setActiveChannel(int channel);
+    void setActiveVariation(int variation);
     void schedule(LooperClip* clip);
     void setChannelSolo(int ch, bool solo);
     void setChannelVolume(int ch, float volume);
     string getWidgetJSON();
     bool reloadChannelDSP(int channel);
     int getActiveChannel();
+    int getActiveVariation();
+    json getClipSummary();
+    json getChannelSummary();
+    void clearChannel(int chNum, int varNum);
 };
 
 

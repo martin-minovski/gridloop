@@ -14,12 +14,6 @@
 
 
 <body>
-
-    <div id="fullscreen" onclick="goFullscreen()" class="fullscreen-icon">
-        <i class="fas fa-expand"></i>
-    </div>
-
-
     <div id="faust-editor-container">
         <h1 style="text-align: center; margin: 10px;">
             DSP <span style="font-weight: 600" id="faust-channel-span"></span>
@@ -37,19 +31,24 @@
         <div class="swiper-wrapper">
             <div class="swiper-slide">
                 Welcome
+
+                <div id="fullscreen" onclick="goFullscreen()" class="fullscreen-icon">
+                    <i class="fas fa-expand"></i>
+                </div>
+
             </div>
             <div class="swiper-slide">
                 <div class="grid" id="masterContainer">
                     <div style="background-color: #f1f1f1" class="grid-item item grid-item-padded">
                         <div style="position: absolute; margin-top: -15px;">
-                            <!--<div class="instr-icon" bank="0" instrument="0" octaveShift="0" style="background-image: url('icons/piano.svg')"></div>-->
-                            <!--<div class="instr-icon" bank="0" instrument="32" octaveShift="-2" style="background-image: url('icons/guitar.svg')"></div>-->
-                            <!--<div class="instr-icon" bank="128" instrument="8" octaveShift="-1" style="background-image: url('icons/drum.svg');"></div>-->
-                            <!--<div class="instr-icon" bank="0" instrument="13" octaveShift="0" style="background-image: url('icons/xylo.svg');"></div>-->
 
-                            <div id="instrument-select" style="display: inline-block; font-size:18px;"></div>
+                            <div class="instr-icon" bank="0" instrument="0" octaveShift="0" style="background-image: url('icons/piano.svg')"></div>
+                            <div class="instr-icon" bank="0" instrument="32" octaveShift="-2" style="background-image: url('icons/guitar.svg')"></div>
+                            <div class="instr-icon" bank="127" instrument="8" octaveShift="-1" style="background-image: url('icons/drum.svg');"></div>
+                            <!--<div class="instr-icon" style="background-image: url('icons/xylo.svg');"></div>-->
+                            <div id="instrument-select" style="font-size:18px;"></div>
 
-                            <span style="position:relative; top: -1px;">
+                            <span style="position:relative; top: -6px;">
                                 <div style="position: relative; display: inline-block;">
                                     <div style="position: absolute; margin-top: 2px; font-size: 10px; margin-left: 1px;">
                                         OCTAVE
@@ -79,8 +78,9 @@
                             <br />
                             <div id="looper-rec" style="margin-bottom: 8px"></div>
                             <div id="looper-clear">
-                                <i class="fas fa-2x fa-ban"></i>
+                                <i class="fas fa-2x fa-ban clear-clips-icon" onclick="clearClips()"></i>
                             </div>
+                            <div id="midi-rec-switch">MIDI</div>
                         </div>
                         <div class="title"><div style="font-size: 10px;">Loop Grid</div></div>
                         <div class="loop-grid-wrapper">

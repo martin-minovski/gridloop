@@ -34,6 +34,9 @@ public:
     void sendFaustCode(int channel, const char *code);
     void sendFaustAck();
     void sendInstruments(string instruments);
+    void sendClipSummary(string json);
+    void sendChannelSummary(string json);
+    void sendActive(int channel, int variation);
 };
 
 

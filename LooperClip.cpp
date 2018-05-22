@@ -5,10 +5,11 @@
 #include "LooperClip.h"
 #include <algorithm>
 
-LooperClip::LooperClip(int channel, bool master, int offset) {
+LooperClip::LooperClip(int channel, int variation, bool master, int offset) {
     firstChunk = new LooperChunk();
     lastChunk = firstChunk;
     this->channel = channel;
+    this->variation = variation;
     this->master = master;
     this->offset = offset;
 }
@@ -25,6 +26,11 @@ void LooperClip::writeSample(float sample) {
 void LooperClip::launch() {
     voices.emplace_back(new LooperVoice(this));
 }
+void LooperClip::launch(int fastForward) {
+    auto voice = new LooperVoice(this);
+    voice->fastForward(fastForward);
+    voices.emplace_back(voice);
+}
 LooperChunk* LooperClip::getFirstChunk() {
     return firstChunk;
 }
@@ -33,12 +39,17 @@ bool LooperClip::isLastChunk(LooperChunk* chunk) {
 }
 float LooperClip::renderVoices() {
     float result = 0;
-    for (auto voice : voices) {
+    auto voiceIt = std::begin(voices);
+    while (voiceIt != std::end(voices)) {
+        auto voice = *voiceIt;
         if (voice->finished()) {
-            voices.erase(std::remove(voices.begin(), voices.end(), voice), voices.end());
+            voiceIt = voices.erase(voiceIt);
             delete voice;
         }
-        else result += voice->getNextSample();
+        else {
+            result += voice->getNextSample();
+            ++voiceIt;
+        }
     }
     return result;
 }
@@ -69,11 +80,17 @@ void LooperClip::setSchedulePeriod(int period) {
 int LooperClip::getChannel() {
     return channel;
 }
-
 int LooperClip::getVariation() {
     return variation;
 }
-
 void LooperClip::setVariation(int value) {
     variation = value;
+}
+void LooperClip::purge() {
+    auto voiceIt = std::begin(voices);
+    while (voiceIt != std::end(voices)) {
+        auto voice = *voiceIt;
+        voiceIt = voices.erase(voiceIt);
+        delete voice;
+    }
 }

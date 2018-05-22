@@ -29,3 +29,8 @@ float LooperVoice::getNextSample() {
     }
     return sample;
 }
+void LooperVoice::fastForward(int samples) {
+    for (int i = 0; i < samples; i++) {
+        getNextSample();
+    }
+}

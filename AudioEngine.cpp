@@ -12,7 +12,7 @@ AudioEngine::AudioEngine(unsigned int sampleRate, unsigned int bufferFrames, RtA
         std::cout << "\nNo audio devices found!\n";
         exit( 0 );
     }
-    cout << endl << dac->getDeviceCount() << " devices found" << endl;
+    cout << endl << dac->getDeviceCount() << " audio devices found" << endl;
 
     printCurrentAudioDriver();
 
@@ -117,5 +117,5 @@ void AudioEngine::printCurrentAudioDriver() {
     apiMap[RtAudio::LINUX_OSS] = "Linux OSS";
     apiMap[RtAudio::RTAUDIO_DUMMY] = "RtAudio Dummy";
 
-    std::cout << "\nCurrent API: " << apiMap[ dac->getCurrentApi() ] << std::endl;
+    std::cout << "Current audio API: " << apiMap[ dac->getCurrentApi() ] << std::endl;
 }

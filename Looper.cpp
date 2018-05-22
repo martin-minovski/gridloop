@@ -27,7 +27,11 @@ float Looper::process(float sample) {
         for (auto clip : clips) {
             if (i == clip->getChannel()) {
                 schedule(clip);
-                channelSample += clip->renderVoices();
+
+                float unconfirmedSample = clip->renderVoices();
+                if (clip->getVariation() == 0 || channels[i]->getVariation() == clip->getVariation()) {
+                    channelSample += unconfirmedSample;
+                }
             }
         }
         float liveSample = 0;
@@ -39,7 +43,7 @@ float Looper::process(float sample) {
 void Looper::startRec() {
     if (recordingClip) return;
     bool isMaster = clips.empty();
-    recordingClip = new LooperClip(activeChannel, isMaster, isMaster ? 0 : timer);
+    recordingClip = new LooperClip(activeChannel, activeVariation, isMaster, isMaster ? 0 : timer);
 }
 void Looper::stopRec() {
     if (!recordingClip) return;
@@ -48,6 +52,14 @@ void Looper::stopRec() {
         int period = (int)round(ratio);
         if (period < 1) period = 1;
         recordingClip->setSchedulePeriod(period);
+
+        // Catch up on samples to ensure immediate playback in the case of rounding down
+        if (ratio - period > 0) {
+            int samplesToCatchUp = recordingClip->getTotalSamples() % masterClip->getTotalSamples();
+            recordingClip->launch(samplesToCatchUp);
+            recordingClip->slaveReschedule();
+            recordingClip->slaveScheduleTick();
+        }
     }
     else masterClip = recordingClip;
     clips.push_back(recordingClip);
@@ -56,8 +68,15 @@ void Looper::stopRec() {
 void Looper::setActiveChannel(int channel) {
     activeChannel = channel;
 }
+void Looper::setActiveVariation(int variation) {
+    activeVariation = variation;
+    channels[activeChannel]->setVariation(variation);
+}
 int Looper::getActiveChannel() {
     return activeChannel;
+}
+int Looper::getActiveVariation() {
+    return activeVariation;
 }
 void Looper::schedule(LooperClip* clip) {
     if (clip->isMaster()) {
@@ -106,4 +125,54 @@ string Looper::getWidgetJSON() {
 }
 bool Looper::reloadChannelDSP(int channel) {
     return channels[channel]->reloadDSPFile();
+}
+json Looper::getClipSummary() {
+    json result;
+    for (auto clip : clips) {
+        json clipJson;
+        clipJson["length"] = clip->getTotalSamples();
+        clipJson["channel"] = clip->getChannel();
+        clipJson["variation"] = clip->getVariation();
+        clipJson["master"] = clip->isMaster();
+        result.push_back(clipJson);
+    }
+    return result;
+}
+json Looper::getChannelSummary() {
+    json result;
+    for (int i = 0; i < numChannels; i++) {
+        json channelJson;
+        channelJson["variation"] = channels[i]->getVariation();
+        channelJson["volume"] = channels[i]->getVolume();
+        channelJson["solo"] = channels[i]->solo;
+        result.push_back(channelJson);
+    }
+    return result;
+}
+void Looper::clearChannel(int chNum, int varNum) {
+    bool clearAll = false;
+    auto clipIt = std::begin(clips);
+    while (clipIt != std::end(clips)) {
+        auto clip = *clipIt;
+        if (clip->getChannel() == chNum && clip->getVariation() == varNum) {
+            if (clip->isMaster()) {
+                clearAll = true;
+                break;
+            }
+            clip->purge();
+            clipIt = clips.erase(clipIt);
+            delete clip;
+        }
+        else ++clipIt;
+    }
+    if (clearAll) {
+        masterClip = nullptr;
+        clipIt = std::begin(clips);
+        while (clipIt != std::end(clips)) {
+            auto clip = *clipIt;
+            clip->purge();
+            clipIt = clips.erase(clipIt);
+            delete clip;
+        }
+    }
 }
