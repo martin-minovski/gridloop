@@ -2,6 +2,10 @@ var editor = ace.edit("faust-editor");
 editor.setFontSize(20);
 var editingChannel = 0;
 var editRequested = false;
+var volumeSliders = [];
+var soloButtons = [];
+var preventSend = false;
+var midiRec = false;
 function editDSP(channel) {
     editRequested = true;
     editingChannel = channel;
@@ -115,12 +119,15 @@ socket.on('cppinput', function (data) {
         var channels = JSON.parse(data.args[0].value);
         if (channels) channels.forEach(function(channel, index) {
             gridItems[index][channel.variation].element.find('.square-variation').show();
+
+            volumeSliders[index].value = channel.volume;
+            soloButtons[index].state = channel.solo;
         });
     }
     if (data.address === 'active') {
         var channel = data.args[0].value;
         var variation = data.args[1].value;
-        gridItems[activeChannel][activeVariation].element.css('border-radius', '0px').find('.square-cover').css('border-radius', '0px');
+        gridItems[activeChannel][activeVariation].element.css('border-radius', '1px').find('.square-cover').css('border-radius', '1px');
         activeChannel = channel;
         activeVariation = variation;
         gridItems[channel][variation].element.css('border-radius', '100px').find('.square-cover').css('border-radius', '100px');
@@ -199,7 +206,7 @@ socket.on('cppinput', function (data) {
 
                 if (axisX.type === 'slider') {
                     var nexusUiWidget = new Nexus.Slider('#' + widgetID, {
-                        'size': [130,20],
+                        'size': [130,30],
                         'mode': 'relative',
                         'min': axisX.min,
                         'max': axisX.max,
@@ -378,7 +385,6 @@ $(document).ready(function() {
     });
 
     recButton.on('change',function(v) {
-        var recDirect = !$('#piano').hasClass('selectedZoomTarget');
         socket.emit('ui', {
             address: 'rec',
             args: [
@@ -388,7 +394,7 @@ $(document).ready(function() {
                 },
                 {
                     type: 'integer',
-                    value: recDirect ? 1 : 0
+                    value: midiRec ? 0 : 1
                 }
             ]
         });
@@ -471,6 +477,7 @@ $(document).ready(function() {
             });
         });
         styllize(gainSlider);
+        volumeSliders[meta] = gainSlider;
     });
 
     $('[instrument]').each(function() {
@@ -495,6 +502,7 @@ $(document).ready(function() {
     $('[solochannel]').each(function() {
 
         var soloBtnId = makeId();
+        var meta = $(this).attr('solochannel');
         $(this).attr('id', soloBtnId);
 
         var soloButton = new Nexus.Button('#' + soloBtnId, {
@@ -518,6 +526,7 @@ $(document).ready(function() {
             });
         });
         styllize(soloButton);
+        soloButtons[meta] = soloButton;
     });
 
     // Get widgets
@@ -582,6 +591,15 @@ $(document).ready(function() {
             prevEl: '.swiper-button-prev'
         }
     });
+
+    var midiRecSwitch = new Nexus.Toggle('#midi-rec-switch', {
+        'size': [20, 20],
+        'state': false
+    });
+    midiRecSwitch.on('change',function(value) {
+        midiRec = value;
+    });
+    styllize(midiRecSwitch);
 
     getClipSummary();
     getChannelSummary();

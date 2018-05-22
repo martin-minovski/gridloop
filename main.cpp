@@ -32,24 +32,21 @@ bool vocoderEnabled = false;
 
 void midiCallback( double deltatime, std::vector< unsigned char > *message, void *userData )
 {
-
-
-    unsigned int nBytes = message->size();
+//    unsigned int nBytes = message->size();
 //    for ( unsigned int i=0; i<nBytes; i++ )
 //        std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
 //    if ( nBytes > 0 )
 //        std::cout << "stamp = " << deltatime << std::endl;
-
     int pitch = message->at(1);
     if (pitch == 1) {
         vocoder->setBetaFactor(0.95f + ((float)message->at(2) / 1280.0f));
     }
-    else if (pitch == 21) {
-
-    }
-    else if (pitch == 22) {
-
-    }
+//    else if (pitch == 21) {
+//
+//    }
+//    else if (pitch == 22) {
+//
+//    }
     else {
         if (message->at(2) == 0) SFSynth::noteOff(pitch);
         else  {
@@ -60,7 +57,6 @@ void midiCallback( double deltatime, std::vector< unsigned char > *message, void
             }
         }
     }
-
 //    if (message->at(0) == 144 || message->at(0) == 158) {
 //    }
 //    if (message->at(0) == 176) {
@@ -236,12 +232,11 @@ void oscCallback(tosc_message* msg) {
 }
 
 int main() {
-
     // Audio parameters
     unsigned int sampleRate = 44100;
-    unsigned int bufferFrames = 1024;
+    unsigned int bufferFrames = 512;
 
-    SFSynth::init(sampleRate * 2, bufferFrames);
+    SFSynth::init(sampleRate * 2, 256);
     osc = new OSC(oscCallback);
     looper = new Looper(osc);
     vocoder = new Vocoder();
@@ -251,9 +246,8 @@ int main() {
     fileManager = new FileManager();
     audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::UNIX_JACK);
 
-
-    // Initialize MIDI listener
 #ifdef MIDI_ENABLED
+    // Initialize MIDI listener
     RtMidiIn *midiIn = new RtMidiIn();
     // Check available ports.
     unsigned int nPorts = midiIn->getPortCount();
@@ -261,22 +255,16 @@ int main() {
         std::cout << "No ports available!\n";
     }
     else {
-
-        std::cout << nPorts << " ports available!\n";
-
-        midiIn->openPort(1);
-        // Set our callback function.  This should be done immediately after
-        // opening the port to avoid having incoming messages written to the
-        // queue.
+        std::cout << nPorts << " MIDI port(s) available\n";
+        midiIn->openPort(nPorts - 1);
         midiIn->setCallback(&midiCallback);
+
         // Ignore sysex, timing, or active sensing messages:
         midiIn->ignoreTypes(true, true, true);
     }
 #endif
 
-
     // Update front-end on boot
-
     osc->sendJson(looper->getWidgetJSON().c_str());
     osc->sendInstruments(SFSynth::getInstruments().dump());
     osc->sendClipSummary(looper->getClipSummary().dump());
@@ -284,13 +272,10 @@ int main() {
     osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
 
     // Quit scenario
-
     char input;
     std::cout << "\nRunning ... press <enter> to quit.\n";
     std::cin.get( input );
-
     audioEngine->shutDown();
     osc->closeSocket();
-
     return 0;
 }

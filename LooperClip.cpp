@@ -39,12 +39,17 @@ bool LooperClip::isLastChunk(LooperChunk* chunk) {
 }
 float LooperClip::renderVoices() {
     float result = 0;
-    for (auto voice : voices) {
+    auto voiceIt = std::begin(voices);
+    while (voiceIt != std::end(voices)) {
+        auto voice = *voiceIt;
         if (voice->finished()) {
-            voices.erase(std::remove(voices.begin(), voices.end(), voice), voices.end());
+            voiceIt = voices.erase(voiceIt);
             delete voice;
         }
-        else result += voice->getNextSample();
+        else {
+            result += voice->getNextSample();
+            ++voiceIt;
+        }
     }
     return result;
 }
@@ -82,8 +87,10 @@ void LooperClip::setVariation(int value) {
     variation = value;
 }
 void LooperClip::purge() {
-    for (auto voice : voices) {
-        voices.erase(std::remove(voices.begin(), voices.end(), voice), voices.end());
+    auto voiceIt = std::begin(voices);
+    while (voiceIt != std::end(voices)) {
+        auto voice = *voiceIt;
+        voiceIt = voices.erase(voiceIt);
         delete voice;
     }
 }

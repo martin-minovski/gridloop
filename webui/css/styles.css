@@ -22,6 +22,14 @@ body {
     width: 300px;
     height: 140px;
     position: absolute;
+
+    /*Disable text selection*/
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer */
+    -khtml-user-select: none; /* KHTML browsers (e.g. Konqueror) */
+    -webkit-user-select: none; /* Chrome, Safari, and Opera */
+    -webkit-touch-callout: none; /* Disable Android and iOS callouts*/
+
 }
 .grid-item-padded {
     padding: 18px;
@@ -187,7 +195,7 @@ body {
     height: 0;
     border-left: 15px solid transparent;
     border-right: 15px solid transparent;
-    border-top: 7px solid #fff;
+    border-top: 7px solid #f1f1f1;
     display: none;
     z-index: 11;
 }
@@ -280,4 +288,25 @@ body {
 }
 .clear-clips-icon:hover {
     color: #777;
+}
+#midi-rec-switch {
+    font-size: 10px;
+    color: #000;
+    position: relative;
+    right: -9px;
+    margin-top: 20px;
+}
+#instrument-select {
+    display: inline-block;
+}
+#instrument-select,
+#instrument-select>select {
+    height: 18px !important;
+    width: 18px !important;
+}
+#instrument-select {
+    position: relative;
+    font-size: 18px;
+    top: -4px;
+    padding: 0 4px 0 4px;
 }

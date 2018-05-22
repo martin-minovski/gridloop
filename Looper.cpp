@@ -151,18 +151,27 @@ json Looper::getChannelSummary() {
 }
 void Looper::clearChannel(int chNum, int varNum) {
     bool clearAll = false;
-    for (auto clip : clips) {
+    auto clipIt = std::begin(clips);
+    while (clipIt != std::end(clips)) {
+        auto clip = *clipIt;
         if (clip->getChannel() == chNum && clip->getVariation() == varNum) {
-            if (clip->isMaster()) clearAll = true;
+            if (clip->isMaster()) {
+                clearAll = true;
+                break;
+            }
             clip->purge();
-            clips.erase(std::remove(clips.begin(), clips.end(), clip), clips.end());
+            clipIt = clips.erase(clipIt);
             delete clip;
         }
+        else ++clipIt;
     }
     if (clearAll) {
-        for (auto clip : clips) {
+        masterClip = nullptr;
+        clipIt = std::begin(clips);
+        while (clipIt != std::end(clips)) {
+            auto clip = *clipIt;
             clip->purge();
-            clips.erase(std::remove(clips.begin(), clips.end(), clip), clips.end());
+            clipIt = clips.erase(clipIt);
             delete clip;
         }
     }

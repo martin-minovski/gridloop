@@ -16,7 +16,7 @@
 class LooperChannel {
     int id;
     int variation = 0;
-    float volume = 1.0f;
+    float volume = 0.5f;
     OSC* osc;
     // Faust
     llvm_dsp_factory* faustFactory;
