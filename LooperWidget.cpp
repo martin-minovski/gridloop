@@ -21,6 +21,11 @@ void LooperWidget::setAxis(const char* axis) {
 }
 void LooperWidget::setType(const char* type) {
     this->type = strdup(type);
+
+    // Add to FSR array
+    if (strcmp(type, "fsr1") == 0) FSR::fsrs[0].push_back(this);
+    if (strcmp(type, "fsr2") == 0) FSR::fsrs[1].push_back(this);
+    if (strcmp(type, "fsr3") == 0) FSR::fsrs[2].push_back(this);
 }
 void LooperWidget::printData() {
     cout<<endl;
@@ -55,4 +60,7 @@ bool LooperWidget::isSync() {
 }
 void LooperWidget::setValue(float value) {
     *zone = value;
+}
+void LooperWidget::setNormalValue(float value) {
+    *zone = min + value * (max - min);
 }

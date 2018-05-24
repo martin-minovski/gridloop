@@ -221,13 +221,18 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
 
     // Adjust phases
     for (int n = 0; n < fftSize; n++) {
-            std::complex<float> ccpx(nextShifted[n].complex.r, nextShifted[n].complex.i);
-            float magnitude = abs(ccpx);
-            float phase = prevFrame[nextShifted[n].peak].phase + ((2 * (float)M_PI * nextShifted[n].shiftedBy) / fftSize) * hopSize;
-            ccpx = polar(magnitude, phase + arg(ccpx));
-            nextShifted[n].complex.r = real(ccpx);
-            nextShifted[n].complex.i = imag(ccpx);
-            nextShifted[n].phase = phase;
+        std::complex<float> ccpx(nextShifted[n].complex.r, nextShifted[n].complex.i);
+        float magnitude = abs(ccpx);
+
+            // Ugly crash fix
+            int nextPeak = nextShifted[n].peak;
+            if (nextPeak < 0 || nextPeak >= fftSize) continue;
+
+        float phase = prevFrame[nextPeak].phase + ((2 * (float)M_PI * nextShifted[n].shiftedBy) / fftSize) * hopSize;
+        ccpx = polar(magnitude, phase + arg(ccpx));
+        nextShifted[n].complex.r = real(ccpx);
+        nextShifted[n].complex.i = imag(ccpx);
+        nextShifted[n].phase = phase;
     }
     for (int n = 0; n < fftSize; n++) {
         prevFrame[n].phase = nextShifted[n].phase;

@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 #include "json.hpp"
+#include "FSR.h"
 using json = nlohmann::json;
 
 using namespace std;
@@ -36,6 +37,7 @@ public:
     json getJson();
     bool isSync();
     void setValue(float value);
+    void setNormalValue(float value);
 };
 
 

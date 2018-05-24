@@ -12,6 +12,7 @@
 #include "SFSynth.h"
 #include "FileManager.h"
 #include "PitchDetector.h"
+#include "FSR.h"
 #include <cmath>
 
 #define MIDI_ENABLED
@@ -20,8 +21,6 @@ using namespace std;
 
 Looper* looper;
 Vocoder* vocoder;
-Vocoder* vocoder2;
-Vocoder* vocoder3;
 OSC* osc;
 AudioEngine* audioEngine;
 FileManager* fileManager;
@@ -29,6 +28,7 @@ PitchDetector* pitchDetector;
 
 bool looperListening = false;
 bool vocoderEnabled = false;
+bool autotuneEnabled = true;
 
 void midiCallback( double deltatime, std::vector< unsigned char > *message, void *userData )
 {
@@ -65,7 +65,7 @@ void midiCallback( double deltatime, std::vector< unsigned char > *message, void
 //    }
 }
 
-float targetFrequency = 500;
+float targetFrequency = 440;
 
 int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
            double streamTime, RtAudioStreamStatus status, void *userData) {
@@ -83,32 +83,23 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         float inputSample = (float) inBuffer[(i / 2) * 2];
         inputSample += tsfSample;
 
-        float looperSample = looper->process(inputSample);
-        outBuffer[i] = looperSample;
-
         if (vocoderEnabled) {
             if (i % 2 == 0) {
-                fftSample = vocoder->processSample(looperSample);
-//              pitchDetector->process(inputSample + fftSample);
+                fftSample = vocoder->processSample(inputSample);
+                pitchDetector->process(inputSample);
             }
-            outBuffer[i] += fftSample;
+            inputSample += fftSample;
         }
+
+        float looperSample = looper->process(inputSample);
+        outBuffer[i] = looperSample;
     }
 
-//    targetFrequency = 196.00;
-//    float targetFrequency2 = 293.66;
-//    float targetFrequency3 = 493.88;
-//    float currentPitch = pitchDetector->getPitch();
-//
-//    float ratio = targetFrequency / currentPitch;
-//    float ratio2 = targetFrequency2 / currentPitch;
-//    float ratio3 = targetFrequency3 / currentPitch;
-//
-//    if (currentPitch > 5 && currentPitch < 2000) {
-//        vocoder->setBetaFactor(ratio);
-//        vocoder2->setBetaFactor(ratio2);
-//        vocoder3->setBetaFactor(ratio3);
-//    }
+    if (vocoderEnabled && autotuneEnabled) {
+        float currentPitch = pitchDetector->getPitch();
+        float ratio = targetFrequency / currentPitch;
+        vocoder->setBetaFactor(ratio);
+    }
 
     osc->oscListen();
 
@@ -231,22 +222,39 @@ void oscCallback(tosc_message* msg) {
     else if (address == "getactive") {
         osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
     }
+    else if (address == "/theremin") {
+        float imuX = tosc_getNextFloat(msg);
+        float imuY = tosc_getNextFloat(msg);
+        float imuZ = tosc_getNextFloat(msg);
+        float frequency = tosc_getNextFloat(msg);
+        float pitch = tosc_getNextFloat(msg);
+        float fsr1 = tosc_getNextFloat(msg);
+        float fsr2 = tosc_getNextFloat(msg);
+        float fsr3 = tosc_getNextFloat(msg);
+
+        float fsrValues[3];
+        fsrValues[0] = fsr1*2;
+        fsrValues[1] = fsr2*2;
+        fsrValues[2] = fsr3*2;
+        FSR::setValues(fsrValues);
+
+        if (autotuneEnabled) targetFrequency = frequency;
+        else vocoder->setBetaFactor(pitch);
+    }
 }
 
 int main() {
     // Audio parameters
     unsigned int sampleRate = 44100;
-    unsigned int bufferFrames = 512;
+    unsigned int bufferFrames = 128;
 
-    SFSynth::init(sampleRate * 2, 256);
+    SFSynth::init(sampleRate * 2, bufferFrames);
     osc = new OSC(oscCallback);
     looper = new Looper(osc, sampleRate);
     vocoder = new Vocoder();
-//    vocoder2 = new Vocoder();
-//    vocoder3 = new Vocoder();
     pitchDetector = new PitchDetector(sampleRate, 2048);
     fileManager = new FileManager();
-    audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::UNIX_JACK);
+    audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::LINUX_ALSA);
 
 #ifdef MIDI_ENABLED
     // Initialize MIDI listener

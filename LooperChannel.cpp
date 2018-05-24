@@ -15,6 +15,9 @@ LooperChannel::LooperChannel(int id, OSC* osc) {
     reloadDSPFile();
 }
 bool LooperChannel::reloadDSPFile() {
+    // First clear FSR registers
+    FSR::clear();
+
     faustUI = FaustUI();
     faustUI.setLooperChannel(id);
     faustUI.initializeNewWidget();

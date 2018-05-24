@@ -146,10 +146,10 @@ body {
     margin: 0 3px 0 2px;
     cursor: pointer;
 
-    -moz-transition: all .5s;
-    -o-transition: all .5s;
-    -webkit-transition: all .5s;
-    transition: all .5s;
+    /*-moz-transition: all .5s;*/
+    /*-o-transition: all .5s;*/
+    /*-webkit-transition: all .5s;*/
+    /*transition: all .5s;*/
 }
 .square-label {
     position: absolute;
@@ -166,10 +166,10 @@ body {
     background-color: black;
     z-index: 10;
 
-    -moz-transition: all .5s;
-    -o-transition: all .5s;
-    -webkit-transition: all .5s;
-    transition: all .5s;
+    /*-moz-transition: all .5s;*/
+    /*-o-transition: all .5s;*/
+    /*-webkit-transition: all .5s;*/
+    /*transition: all .5s;*/
 }
 .square-counter{
     position: absolute;
