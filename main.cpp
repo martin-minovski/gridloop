@@ -166,10 +166,26 @@ void oscCallback(tosc_message* msg) {
         SFSynth::setPreset(bank, instrument);
     }
     else if (address == "looperchannel") {
+        bool continuousRec = false;
+        if (looper->isRecording()) {
+            continuousRec = true;
+            looper->stopRec();
+        }
+
         int chNum = tosc_getNextInt32(msg);
         int varNum = tosc_getNextInt32(msg);
         looper->setActiveChannel(chNum);
         looper->setActiveVariation(varNum);
+
+        if (continuousRec) {
+            looper->startRec();
+            osc->sendClipSummary(looper->getClipSummary().dump());
+        }
+        osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
+    }
+    else if (address == "loopergroupvariation") {
+        int varNum = tosc_getNextInt32(msg);
+        looper->setAllVariations(varNum);
         osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
     }
     else if (address == "clearchannel") {
@@ -246,7 +262,7 @@ void oscCallback(tosc_message* msg) {
 int main() {
     // Audio parameters
     unsigned int sampleRate = 44100;
-    unsigned int bufferFrames = 128;
+    unsigned int bufferFrames = 256;
 
     SFSynth::init(sampleRate * 2, bufferFrames);
     osc = new OSC(oscCallback);

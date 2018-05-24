@@ -573,7 +573,7 @@ $(document).ready(function() {
         // }
         var squareChar = thisVariation === 0 ? 'X' : String.fromCharCode(64 + thisVariation);
         var square = $(`
-        <div class="square" onclick="activateChannel(`+ thisChannel + ',' + thisVariation + `);">
+        <div class="square" onpointerdown="activateChannel(`+ thisChannel + ',' + thisVariation + `);">
             <div class="square-label">` + squareChar + `</div>
             <div class="square-cover"></div>
             <div class="square-counter"></div>
@@ -710,4 +710,16 @@ function clearClips() {
             }
         ]
     });
+}
+function loopGroupCtrl(variation) {
+    socket.emit('ui', {
+        address: 'loopergroupvariation',
+        args: [
+            {
+                type: 'integer',
+                value: variation
+            }
+        ]
+    });
+    getChannelSummary();
 }

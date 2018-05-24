@@ -49,6 +49,12 @@ void Looper::startRec() {
 void Looper::stopRec() {
     if (!recordingClip) return;
     if (!recordingClip->isMaster()) {
+        // Sanity check
+        if (!masterClip) {
+            recordingClip = nullptr;
+            return;
+        }
+
         double ratio = (double)recordingClip->getTotalSamples() / (double)masterClip->getTotalSamples();
         int period = (int)round(ratio);
         if (period < 1) period = 1;
@@ -194,5 +200,13 @@ void Looper::clearChannel(int chNum, int varNum) {
 void Looper::storeWidgetAutomation(long pointer, float value) {
     if (recordingClip) {
         recordingClip->storeWidgetAutomation(pointer, value);
+    }
+}
+bool Looper::isRecording() {
+    return recordingClip != nullptr;
+}
+void Looper::setAllVariations(int variation) {
+    for (int i = 0; i < numChannels; i++) {
+        channels[i]->setVariation(variation);
     }
 }

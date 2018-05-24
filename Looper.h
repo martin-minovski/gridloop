@@ -44,6 +44,8 @@ public:
     json getChannelSummary();
     void clearChannel(int chNum, int varNum);
     void storeWidgetAutomation(long pointer, float value);
+    bool isRecording();
+    void setAllVariations(int variation);
 };
 
 
