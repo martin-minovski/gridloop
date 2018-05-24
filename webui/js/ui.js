@@ -118,7 +118,9 @@ socket.on('cppinput', function (data) {
         }
         var channels = JSON.parse(data.args[0].value);
         if (channels) channels.forEach(function(channel, index) {
-            gridItems[index][channel.variation].element.find('.square-variation').show();
+            if (channel.variation !== 0) {
+                gridItems[index][channel.variation].element.find('.square-variation').show();
+            }
 
             volumeSliders[index].value = channel.volume;
             soloButtons[index].state = channel.solo;
@@ -581,6 +583,7 @@ $(document).ready(function() {
             <div class="square-variation"></div>
         </div>
         `);
+        if (thisVariation === 0)  square.append($('<div class="square-variation-constant"></div>'));
         square.css('background-color', channelColors[thisChannel]);
         gridItems[thisChannel][thisVariation].element = square;
         wrapper.append(square);
