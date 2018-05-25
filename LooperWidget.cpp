@@ -22,10 +22,14 @@ void LooperWidget::setAxis(const char* axis) {
 void LooperWidget::setType(const char* type) {
     this->type = strdup(type);
 
-    // Add to FSR array
-    if (strcmp(type, "fsr1") == 0) FSR::fsrs[0].push_back(this);
-    if (strcmp(type, "fsr2") == 0) FSR::fsrs[1].push_back(this);
-    if (strcmp(type, "fsr3") == 0) FSR::fsrs[2].push_back(this);
+    // Add to Theremin array
+    if (strcmp(type, "fsr1") == 0) Theremin::inputs[0].push_back(this);
+    if (strcmp(type, "fsr2") == 0) Theremin::inputs[1].push_back(this);
+    if (strcmp(type, "fsr3") == 0) Theremin::inputs[2].push_back(this);
+    if (strcmp(type, "theremin") == 0) Theremin::inputs[3].push_back(this);
+    if (strcmp(type, "imux") == 0) Theremin::inputs[4].push_back(this);
+    if (strcmp(type, "imuy") == 0) Theremin::inputs[5].push_back(this);
+    if (strcmp(type, "imuz") == 0) Theremin::inputs[6].push_back(this);
 }
 void LooperWidget::printData() {
     cout<<endl;

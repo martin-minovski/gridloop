@@ -9,13 +9,14 @@
 #include "LooperWidget.h"
 using namespace std;
 
-#define NUMBER_OF_FSRS 3
+#define NUMBER_OF_INPUTS 7
 
 class LooperWidget;
 
-class FSR {
+class Theremin {
 public:
-    static vector<LooperWidget*> fsrs[NUMBER_OF_FSRS];
+    static const int nInputs = NUMBER_OF_INPUTS;
+    static vector<LooperWidget*> inputs[NUMBER_OF_INPUTS];
     static void clear();
     static void setValues(float* fsrValues);
 };

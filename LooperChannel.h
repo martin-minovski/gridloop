@@ -10,7 +10,7 @@
 #include "faust/gui/UI.h"
 #include "FaustUI.h"
 #include "OSC.h"
-#include "FSR.h"
+#include "Theremin.h"
 
 #define FAUST_BUFFER_SIZE 1
 

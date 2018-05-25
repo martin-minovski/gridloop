@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=false">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=false">
     <meta charset="utf-8">
     <title>WebLoopStation</title>
 
@@ -35,9 +35,15 @@
                 <div id="fullscreen" onclick="goFullscreen()" class="fullscreen-icon">
                     <i class="fas fa-expand"></i>
                 </div>
+                <div onclick="zoomIn()" class="zoom-in-icon home-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div onclick="zoomOut()" class="zoom-out-icon home-icon">
+                    <i class="fas fa-minus"></i>
+                </div>
 
             </div>
-            <div class="swiper-slide">
+            <div class="swiper-slide noncentered-slide">
                 <div class="grid" id="masterContainer">
                     <div style="background-color: #f1f1f1" class="grid-item item grid-item-padded">
                         <div style="position: absolute; margin-top: -15px;">

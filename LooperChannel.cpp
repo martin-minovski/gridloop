@@ -15,8 +15,8 @@ LooperChannel::LooperChannel(int id, OSC* osc) {
     reloadDSPFile();
 }
 bool LooperChannel::reloadDSPFile() {
-    // First clear FSR registers
-    FSR::clear();
+    // First clear Theremin registers
+    Theremin::clear();
 
     faustUI = FaustUI();
     faustUI.setLooperChannel(id);

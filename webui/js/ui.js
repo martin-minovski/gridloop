@@ -290,7 +290,11 @@ socket.on('cppinput', function (data) {
                     styllize(nexusUiWidget);
                     $('#' + widgetID).css('margin-left', '40px');
                 }
-                else if (axisX.type === 'sync' || axisX.type.indexOf('fsr') > -1) {
+                else if (
+                    axisX.type === 'sync' ||
+                    axisX.type === 'theremin' ||
+                    axisX.type.indexOf('fsr') > -1 ||
+                    axisX.type.indexOf('imu') > -1) {
                     $('#' + widgetID).html(axisX.type.toUpperCase() + "<br /><br />")
                         .css('font-weight', '600')
                         .css('font-size', '14px')
@@ -591,8 +595,12 @@ $(document).ready(function() {
 
     // Initialize Swiper
     var swiper = new Swiper('.swiper-container', {
-        pagination: {
-            el: '.swiper-pagination'
+        // pagination: {
+        //     el: '.swiper-pagination'
+        // },
+        coverflowEffect: {
+            rotate: 30,
+            slideShadows: false,
         },
         simulateTouch: false,
         navigation: {
@@ -725,4 +733,23 @@ function loopGroupCtrl(variation) {
         ]
     });
     getChannelSummary();
+}
+
+// Zoom logic
+var zoomFactor = 1;
+var zoomStep = 0.075;
+function zoomIn() {
+    zoomFactor += zoomStep;
+    zoomControl(zoomFactor);
+}
+function zoomOut() {
+    zoomFactor -= zoomStep;
+    zoomControl(zoomFactor);
+}
+function zoomControl(factor) {
+    var viewport = document.querySelector('meta[name="viewport"]');
+
+    if ( viewport ) {
+        viewport.content = "user-scalable=false, initial-scale=" + factor;
+    }
 }

@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 #include "json.hpp"
-#include "FSR.h"
+#include "Theremin.h"
 using json = nlohmann::json;
 
 using namespace std;

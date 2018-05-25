@@ -12,7 +12,7 @@
 #include "SFSynth.h"
 #include "FileManager.h"
 #include "PitchDetector.h"
-#include "FSR.h"
+#include "Theremin.h"
 #include <cmath>
 
 #define MIDI_ENABLED
@@ -248,11 +248,16 @@ void oscCallback(tosc_message* msg) {
         float fsr2 = tosc_getNextFloat(msg);
         float fsr3 = tosc_getNextFloat(msg);
 
-        float fsrValues[3];
-        fsrValues[0] = fsr1*2;
-        fsrValues[1] = fsr2*2;
-        fsrValues[2] = fsr3*2;
-        FSR::setValues(fsrValues);
+        float thereminValues[Theremin::nInputs];
+        int i = 0;
+        thereminValues[i++] = fsr1*2;
+        thereminValues[i++] = fsr2*2;
+        thereminValues[i++] = fsr3*2;
+        thereminValues[i++] = frequency;
+        thereminValues[i++] = imuX;
+        thereminValues[i++] = imuY;
+        thereminValues[i++] = imuZ;
+        Theremin::setValues(thereminValues);
 
         if (autotuneEnabled) targetFrequency = frequency;
         else vocoder->setBetaFactor(pitch);
