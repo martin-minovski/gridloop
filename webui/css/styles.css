@@ -7,12 +7,14 @@ body {
 }
 .grid{
     position: relative;
+    -moz-transform-origin: top center;
 }
 .item {
-    position: absolute;
+    position: relative;
 }
 .grid-item-channel {
     /*float: left;*/
+    display: inline-block;
     width: 130px;
     height: 300px;
     overflow: auto;
@@ -21,7 +23,7 @@ body {
     /*float: left;*/
     width: 300px;
     height: 140px;
-    position: absolute;
+    position: relative;
 
     /*Disable text selection*/
     -moz-user-select: none; /* Firefox */

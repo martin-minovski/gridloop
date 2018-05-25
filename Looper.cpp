@@ -82,6 +82,8 @@ void Looper::stopRec() {
             }
         }
     }
+    recordingClip->roundIn();
+    recordingClip->roundOut();
     clips.push_back(recordingClip);
     recordingClip = nullptr;
 }

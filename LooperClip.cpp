@@ -98,3 +98,9 @@ void LooperClip::purge() {
 void LooperClip::storeWidgetAutomation(long pointer, float value) {
     lastChunk->writeZone(pointer, value);
 }
+void LooperClip::roundOut() {
+    lastChunk->roundOut();
+}
+void LooperClip::roundIn() {
+    firstChunk->roundIn();
+}

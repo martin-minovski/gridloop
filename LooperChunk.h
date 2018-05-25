@@ -28,6 +28,8 @@ public:
     int getWriter();
     int getSize();
     LooperChunk* getNext();
+    void roundOut();
+    void roundIn();
 
     void writeZone(long pointer, float value);
     void runWidgetAutomation(int index);

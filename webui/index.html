@@ -30,9 +30,15 @@
     <div class="swiper-container">
         <div class="swiper-wrapper">
             <div class="swiper-slide">
-                Welcome
+                <div class="grid">
+                    <div class="grid-item item grid-item-padded">
+                        <div style="margin-top: 53px;" >
+                            Welcome
+                        </div>
+                    </div>
+                </div>
 
-                <div id="fullscreen" onclick="goFullscreen()" class="fullscreen-icon">
+                <div id="fullscreen" onclick="fullscreen()" class="fullscreen-icon">
                     <i class="fas fa-expand"></i>
                 </div>
                 <div onclick="zoomIn()" class="zoom-in-icon home-icon">
@@ -115,17 +121,15 @@
 
 <script src="socket.io/socket.io.js"></script>
 
-<script src="lib/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="lib/ace.js"></script>
 <script src="lib/jquery.js"></script>
 <script src="lib/zoomooz.js"></script>
-
-<script src="lib/masonry.js"></script>
-
 <script src="lib/nexusUI.js"></script>
-
-<script src="js/helpers.js"></script>
-<script src="js/ui.js"></script>
-
 <script src="lib/swiper.js"></script>
+
+<script src="js/functions.js"></script>
+<script src="js/variables.js"></script>
+<script src="js/osc.js"></script>
+<script src="js/setup.js"></script>
 
 </html>

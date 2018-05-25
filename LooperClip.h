@@ -46,6 +46,8 @@ public:
     void setVariation(int value);
     void purge();
     void storeWidgetAutomation(long pointer, float value);
+    void roundOut();
+    void roundIn();
 };
 
 #endif //RTPIANO_LOOPERCLIP_H

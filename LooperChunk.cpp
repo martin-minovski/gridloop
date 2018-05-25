@@ -35,6 +35,16 @@ int LooperChunk::getSize() {
 LooperChunk* LooperChunk::getNext() {
     return nextChunk;
 }
+void LooperChunk::roundOut() {
+    for (int i = 0; i < writer; i++) {
+        samples[i] *= (float)(writer - i) / writer;
+    }
+}
+void LooperChunk::roundIn() {
+    for (int i = 0; i < writer; i++) {
+        samples[i] *= (float)i / writer;
+    }
+}
 
 // Faust widget automation
 
