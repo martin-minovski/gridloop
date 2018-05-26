@@ -31,15 +31,15 @@ bool looperListening = false;
 bool vocoderEnabled = false;
 bool autotuneEnabled = true;
 
-void midiCallback( double deltatime, std::vector< unsigned char > *message, void *userData )
+void midiCallback(double deltatime, vector<unsigned char> *message, void *userData)
 {
 #ifdef MIDI_DEBUG
     unsigned long nBytes = message->size();
     for (unsigned long i = 0; i < nBytes; i++) {
-        std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+        cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
     }
     if (nBytes > 0) {
-        std::cout << "stamp = " << deltatime << std::endl;
+        cout << "stamp = " << deltatime << endl;
     }
 #endif
     int pitch = message->at(1);
@@ -71,7 +71,7 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     double *outBuffer = (double *) outputBuffer;
 
     if (status) {
-        std::cout << "Stream underflow detected!" << std::endl;
+        cout << "Stream underflow detected!" << endl;
     }
 
     float fftSample = 0;
@@ -280,10 +280,10 @@ int main() {
     // Check available ports.
     unsigned int nPorts = midiIn->getPortCount();
     if ( nPorts == 0 ) {
-        std::cout << "No ports available!\n";
+        cout << "No ports available!\n";
     }
     else {
-        std::cout << nPorts << " MIDI port(s) available\n";
+        cout << nPorts << " MIDI port(s) available\n";
         midiIn->openPort(nPorts - 1);
         midiIn->setCallback(&midiCallback);
 
@@ -301,8 +301,8 @@ int main() {
 
     // Quit scenario
     char input;
-    std::cout << "\nRunning ... press <enter> to quit.\n";
-    std::cin.get( input );
+    cout << "\nRunning ... press <enter> to quit.\n";
+    cin.get(input);
     audioEngine->shutDown();
     osc->closeSocket();
     return 0;
