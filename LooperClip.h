@@ -24,6 +24,7 @@ class LooperClip {
     int totalSamples = 0;
     int schedulePeriod = 0;
     int scheduleCountdown = 0;
+    int recorderNotifications = 0;
 public:
     LooperClip(int channel, int variation, bool master, int offset);
     void writeSample(float sample);
@@ -48,6 +49,8 @@ public:
     void storeWidgetAutomation(long pointer, float value);
     void roundOut();
     void roundIn();
+    void recorderNotify();
+    int getRecorderNotifications();
 };
 
 #endif //RTPIANO_LOOPERCLIP_H

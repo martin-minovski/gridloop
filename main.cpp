@@ -16,6 +16,7 @@
 #include <cmath>
 
 #define MIDI_ENABLED
+//#define MIDI_DEBUG
 
 using namespace std;
 
@@ -32,21 +33,23 @@ bool autotuneEnabled = true;
 
 void midiCallback( double deltatime, std::vector< unsigned char > *message, void *userData )
 {
-//    unsigned int nBytes = message->size();
-//    for ( unsigned int i=0; i<nBytes; i++ )
-//        std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
-//    if ( nBytes > 0 )
-//        std::cout << "stamp = " << deltatime << std::endl;
+#ifdef MIDI_DEBUG
+    unsigned long nBytes = message->size();
+    for (unsigned long i = 0; i < nBytes; i++) {
+        std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+    }
+    if (nBytes > 0) {
+        std::cout << "stamp = " << deltatime << std::endl;
+    }
+#endif
     int pitch = message->at(1);
     if (pitch == 1) {
         vocoder->setBetaFactor(0.95f + ((float)message->at(2) / 1280.0f));
     }
-//    else if (pitch == 21) {
-//
-//    }
-//    else if (pitch == 22) {
-//
-//    }
+    else if (message->at(0) == 176) {
+        if (message->at(2) > 0) SFSynth::sustainOn();
+        else SFSynth::sustainOff();
+    }
     else {
         if (message->at(2) == 0) SFSynth::noteOff(pitch);
         else  {
@@ -57,12 +60,6 @@ void midiCallback( double deltatime, std::vector< unsigned char > *message, void
             }
         }
     }
-//    if (message->at(0) == 144 || message->at(0) == 158) {
-//    }
-//    if (message->at(0) == 176) {
-//        if (message->at(2) > 0) SFSynth::sustainOn();
-//        else SFSynth::sustainOff();
-//    }
 }
 
 float targetFrequency = 440;

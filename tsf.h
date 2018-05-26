@@ -928,7 +928,14 @@ static void tsf_voice_endquick(struct tsf_voice* v, float outSampleRate)
 
 static void tsf_voice_calcpitchratio(struct tsf_voice* v, float pitchShift, float outSampleRate)
 {
-	double note = v->playingKey + v->region->transpose + v->region->tune / 100.0;
+	struct tsf_region* region = v->region;
+	if (region == NULL) return;
+
+	int playingKey = v->playingKey;
+	int transpose = region->transpose;
+	int tune = region->tune;
+
+	double note = playingKey + transpose + tune / 100.0;
 	double adjustedPitch = v->region->pitch_keycenter + (note - v->region->pitch_keycenter) * (v->region->pitch_keytrack / 100.0);
 	if (pitchShift) adjustedPitch += pitchShift;
 	v->pitchInputTimecents = adjustedPitch * 100.0;

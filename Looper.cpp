@@ -65,7 +65,9 @@ void Looper::stopRec() {
             int samplesToCatchUp = recordingClip->getTotalSamples() % masterClip->getTotalSamples();
             recordingClip->launch(samplesToCatchUp);
             recordingClip->slaveReschedule();
-            recordingClip->slaveScheduleTick();
+            if (recordingClip->getRecorderNotifications() > period) {
+                recordingClip->slaveScheduleTick();
+            }
         }
     }
     else {
@@ -82,9 +84,9 @@ void Looper::stopRec() {
             }
         }
     }
+    clips.push_back(recordingClip);
     recordingClip->roundIn();
     recordingClip->roundOut();
-    clips.push_back(recordingClip);
     recordingClip = nullptr;
 }
 void Looper::setActiveChannel(int channel) {
@@ -109,6 +111,9 @@ void Looper::schedule(LooperClip* clip) {
                 if (!slaveClip->isMaster()) {
                     slaveClip->slaveScheduleTick();
                 }
+            }
+            if (recordingClip) {
+                recordingClip->recorderNotify();
             }
         }
         else {

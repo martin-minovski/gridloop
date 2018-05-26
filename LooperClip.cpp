@@ -104,3 +104,9 @@ void LooperClip::roundOut() {
 void LooperClip::roundIn() {
     firstChunk->roundIn();
 }
+void LooperClip::recorderNotify() {
+    recorderNotifications++;
+}
+int LooperClip::getRecorderNotifications() {
+    return recorderNotifications;
+}
