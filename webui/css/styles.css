@@ -157,7 +157,6 @@ body {
 .square-label {
     position: absolute;
     color: white;
-    position: absolute;
     left: 50%;
     transform: translateX(-50%) translateY(26%);
 }
@@ -254,7 +253,7 @@ body {
 }
 
 .swiper-button-next, .swiper-button-prev {
-    top: 95%;
+    bottom: 0;
     z-index: 999999;
 }
 
@@ -289,7 +288,7 @@ body {
 @media (max-width: 640px) {
     .swiper-button-next,
     .swiper-button-prev {
-        display: none;
+        /*display: none;*/
     }
 }
 
@@ -335,10 +334,9 @@ body {
     display: inline-block;
     padding: 1px 20px;
     margin: 0 3px;
-    border: 1px solid #777;
-    /*border-radius: 5px;*/
-    background-color: #aaa;
-    color: #eee;
+    border: 1px solid #aaa;
+    background-color: #fff;
+    color: #aaa;
 }
 .zoom-in-icon {
     left: 0;
@@ -357,4 +355,33 @@ body {
     margin: 55px 10px;
     font-size: 30px;
     cursor: pointer;
+}
+.square,
+.square-counter,
+.square-cover,
+.square-label,
+.square-master,
+.square-variation,
+.loop-group-control,
+.loop-group-control-btn,
+#looper-clear {
+    -webkit-tap-highlight-color:  rgba(255, 255, 255, 0.3);
+}
+
+#looper-channel-holder {
+    position: relative;
+    margin-left: -40px;
+}
+
+#master-volume-holder {
+    position: absolute;
+    right: 12px;
+    top: 17px;
+}
+
+#master-volume-title {
+    position: absolute;
+    font-size: 9px;
+    top: -13px;
+    right: 1px;
 }

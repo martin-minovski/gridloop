@@ -217,7 +217,7 @@ TSFDEF float tsf_channel_get_volume(tsf* f, int channel);
 #endif
 
 // Grace release time for quick voice off (avoid clicking noise)
-#define TSF_FASTRELEASETIME 0.01f
+#define TSF_FASTRELEASETIME 0.1f
 
 #if !defined(TSF_MALLOC) || !defined(TSF_FREE) || !defined(TSF_REALLOC)
 #  include <stdlib.h>

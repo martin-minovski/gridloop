@@ -31,9 +31,15 @@ class LooperChannel {
     float leftChannel = true;
     float* faustIn[2] = {faustInL, faustInR};
     float* faustOut[2] = {faustOutL, faustOutR};
+
+    bool soloMute = false;
+    bool muteMute = false;
+    bool muteFinal = false;
+    void setFinalMuteSoft(bool mute);
+    int graceRoundCountdown = 0;
+    int graceRoundCeil = 2048;
 public:
     bool solo = false;
-    bool soloMute = false;
     LooperChannel(int id, OSC* osc);
     float process(float sample);
     void setVolume(float volume);
@@ -42,6 +48,8 @@ public:
     void setVariation(int variation);
     int getVariation();
     float getVolume();
+    void setSoloMute(bool soloMute);
+    void setMute(bool mute);
 };
 
 

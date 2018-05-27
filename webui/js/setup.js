@@ -41,9 +41,9 @@ $(document).ready(function() {
     });
     styllize(piano);
 
-    var recButton = new Nexus.Button('#looper-rec',{
+    recButton = new Nexus.Button('#looper-rec', {
         'size': [40, 40],
-        'mode': 'toggle',  // 'button', 'toggle', or 'impulse'
+        'mode': 'toggle',
         'state': false
     });
 
@@ -78,8 +78,8 @@ $(document).ready(function() {
     for (var i = 0; i < looperChannels; i++) {
         chArray.push((i+1).toString());
         var channelArea = $('<div style="display: inline-block"></div>');
-        channelArea.append($('<div slider="channelvolume" meta="' + i + '" sizeX="30" sizeY="115" style="margin-left: 6px;"></div>'));
-        channelArea.append($('<div style="height:5px;position:relative;"><div style="position:absolute;margin-top:11px;margin-left:9px;pointer-events:none;color:#bbb">S</div></div>'));
+        channelArea.append($('<div slider="channelvolume" meta="' + i + '" sizeX="30" sizeY="115" style="margin-left: 5px;"></div>'));
+        channelArea.append($('<div style="height:5px;position:relative;"><div style="position:absolute;margin-top:10px;margin-left:9px;pointer-events:none;color:#bbb">S</div></div>'));
         channelArea.append($('<div solochannel="' + i + '"></div>'));
         $('#looper-channel-holder').append(channelArea);
     }
@@ -97,7 +97,7 @@ $(document).ready(function() {
 
         var gainSlider = new Nexus.Slider('#' + newId ,{
             'size': [parseInt(sizeX), parseInt(sizeY)],
-            'mode': 'absolute',  // 'relative' or 'absolute'
+            'mode': 'relative',
             'min': min ? parseInt(min) : 0,
             'max': max ? parseInt(max) : 1,
             'step': step ? parseInt(step) : 0,
@@ -231,7 +231,8 @@ $(document).ready(function() {
         navigation: {
             nextEl: '.swiper-button-next',
             prevEl: '.swiper-button-prev'
-        }
+        },
+        allowTouchMove: false
     });
 
     var midiRecSwitch = new Nexus.Toggle('#midi-rec-switch', {
@@ -249,14 +250,73 @@ $(document).ready(function() {
 
     editor.setFontSize(20);
 
-    $(window).keypress(function (e) {
-        if (!isEditorOpen) {
-            if (e.key === ' ' || e.key === 'Spacebar') {
+    $(window).keydown(function (e) {
+        if (e.keyCode === 16) {
+            shiftPressed = true;
+        }
 
+        if (!isEditorOpen) {
+
+            // Space or Enter
+            if (e.keyCode === 13 || e.keyCode === 32) {
+                if (recButton.state) recButton.turnOff();
+                else recButton.turnOn();
                 e.preventDefault();
             }
+
+            // Delete or Backspace
+            else if (e.keyCode === 46 || e.keyCode === 8) {
+                clearClips();
+            }
+
+            // Channels 1-8
+            else if (e.keyCode >= 49 && e.keyCode <= 56) {
+                var chNum = e.keyCode - 49;
+                if (shiftPressed) toggleSolo(chNum);
+                else activateChannel(chNum, 0);
+            }
+
+            // Variations A-C
+            else if (e.keyCode > 64 && e.keyCode <= 67) {
+                var varNum = e.keyCode - 64;
+                if (shiftPressed) loopGroupCtrl(varNum);
+                else activateChannel(activeChannel, varNum);
+            }
+
+            // All variations (X)
+            else if (e.keyCode === 88) {
+                if (shiftPressed) loopGroupCtrl(0);
+                else activateChannel(activeChannel, 0);
+            }
         }
-    })
+    });
+
+    $(window).keyup(function (e) {
+        if (e.keyCode === 16) {
+            shiftPressed = false;
+        }
+    });
+
+    var masterVolume = new Nexus.Slider('#master-volume' ,{
+        'size': [30, 150],
+        'mode': 'relative',
+        'min': 0,
+        'max': 1.2,
+        'step': 0,
+        'value': 1
+    });
+    masterVolume.on('change',function(val) {
+        socket.emit('ui', {
+            address: 'mastervolume',
+            args: [
+                {
+                    type: 'float',
+                    value: val
+                }
+            ]
+        });
+    });
+    styllize(masterVolume);
 
     // Setup complete
 });

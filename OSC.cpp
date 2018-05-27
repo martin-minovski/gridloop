@@ -143,3 +143,11 @@ void OSC::sendActive(int channel, int variation) {
             channel, variation);
     sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
 }
+void OSC::sendRecUpdate(bool state) {
+    unsigned int len = tosc_writeMessage(
+            bufferOut, sizeof(bufferOut),
+            "recstate_update",
+            "i",
+            (int)state);
+    sendto(fd, bufferOut, len, 0, addInfoOut->ai_addr, addInfoOut->ai_addrlen);
+}

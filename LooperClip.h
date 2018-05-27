@@ -25,6 +25,9 @@ class LooperClip {
     int schedulePeriod = 0;
     int scheduleCountdown = 0;
     int recorderNotifications = 0;
+    bool unmute = true;
+    int graceRoundCountdown = 0;
+    int graceRoundCeil = 2048;
 public:
     LooperClip(int channel, int variation, bool master, int offset);
     void writeSample(float sample);
@@ -32,7 +35,7 @@ public:
     void launch(int fastForward);
     LooperChunk* getFirstChunk();
     bool isLastChunk(LooperChunk* chunk);
-    float renderVoices();
+    float renderVoices(bool antiClipState);
     bool isPlaying();
     bool isMaster();
     int getOffset();
@@ -51,6 +54,8 @@ public:
     void roundIn();
     void recorderNotify();
     int getRecorderNotifications();
+    void setUnmuteHard(bool unmute);
+    void setUnmuteSoft(bool unmute);
 };
 
 #endif //RTPIANO_LOOPERCLIP_H

@@ -18,7 +18,7 @@
         <h1 style="text-align: center; margin: 10px;">
             DSP <span style="font-weight: 600" id="faust-channel-span"></span>
         </h1>
-        <div style="position:fixed; left: 23px; top: 14px;">
+        <div style="position:fixed; left: 64px; top: 14px;">
             <i class="fas fa-check fa-2x" style="cursor: pointer" onclick="faustSave()"></i>
             &nbsp;&nbsp;&nbsp;
             <i class="fas fa-times fa-2x" style="cursor: pointer" onclick="faustClose()"></i>
@@ -26,29 +26,19 @@
         <div id="faust-editor"></div>
     </div>
 
+    <div id="fullscreen" onclick="fullscreen()" class="fullscreen-icon">
+        <i class="fas fa-expand"></i>
+    </div>
+    <div onclick="zoomIn()" class="zoom-in-icon home-icon">
+        <i class="fas fa-plus"></i>
+    </div>
+    <div onclick="zoomOut()" class="zoom-out-icon home-icon">
+        <i class="fas fa-minus"></i>
+    </div>
+
     <!-- Swiper -->
     <div class="swiper-container">
         <div class="swiper-wrapper">
-            <div class="swiper-slide">
-                <div class="grid">
-                    <div class="grid-item item grid-item-padded">
-                        <div style="margin-top: 53px;" >
-                            Welcome
-                        </div>
-                    </div>
-                </div>
-
-                <div id="fullscreen" onclick="fullscreen()" class="fullscreen-icon">
-                    <i class="fas fa-expand"></i>
-                </div>
-                <div onclick="zoomIn()" class="zoom-in-icon home-icon">
-                    <i class="fas fa-plus"></i>
-                </div>
-                <div onclick="zoomOut()" class="zoom-out-icon home-icon">
-                    <i class="fas fa-minus"></i>
-                </div>
-
-            </div>
             <div class="swiper-slide noncentered-slide">
                 <div class="grid" id="masterContainer">
                     <div style="background-color: #f1f1f1" class="grid-item item grid-item-padded">
@@ -83,6 +73,12 @@
                     <div class="grid-item item grid-item-padded" style="background-color: #f5f5f5;">
                         <div class="title"><div style="font-size: 10px;">Channel levels</div></div>
                         <div id="looper-channel-holder"></div>
+                        <div id="master-volume-holder">
+                            <div id="master-volume-title">
+                                Master
+                            </div>
+                            <div id="master-volume"></div>
+                        </div>
                     </div>
                     <div class="grid-item item grid-item-padded" style="background-color: #f1f1f1; color: white;">
 

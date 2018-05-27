@@ -16,6 +16,7 @@ Looper::Looper(OSC* osc, unsigned int sampleRate) {
         channels[i] = new LooperChannel(i, osc);
     }
     this->sampleRate = sampleRate;
+    this->osc = osc;
 }
 float Looper::process(float sample) {
     if (recordingClip) {
@@ -28,11 +29,10 @@ float Looper::process(float sample) {
         for (auto clip : clips) {
             if (i == clip->getChannel()) {
                 schedule(clip);
-
-                float unconfirmedSample = clip->renderVoices();
-                if (clip->getVariation() == 0 || channels[i]->getVariation() == clip->getVariation()) {
-                    channelSample += unconfirmedSample;
-                }
+                bool unmutedVariation =
+                        clip->getVariation() == 0 ||
+                        channels[i]->getVariation() == clip->getVariation();
+                channelSample += clip->renderVoices(unmutedVariation);
             }
         }
         float liveSample = 0;
@@ -45,6 +45,7 @@ void Looper::startRec() {
     if (recordingClip) return;
     bool isMaster = clips.empty();
     recordingClip = new LooperClip(activeChannel, activeVariation, isMaster, isMaster ? 0 : timer);
+    osc->sendRecUpdate(true);
 }
 void Looper::stopRec() {
     if (!recordingClip) return;
@@ -68,6 +69,8 @@ void Looper::stopRec() {
             if (recordingClip->getRecorderNotifications() > period) {
                 recordingClip->slaveScheduleTick();
             }
+            // Also prevent clicking noise
+            recordingClip->setUnmuteHard(false);
         }
     }
     else {
@@ -88,13 +91,19 @@ void Looper::stopRec() {
     recordingClip->roundIn();
     recordingClip->roundOut();
     recordingClip = nullptr;
+    osc->sendRecUpdate(false);
 }
 void Looper::setActiveChannel(int channel) {
     activeChannel = channel;
 }
 void Looper::setActiveVariation(int variation) {
     activeVariation = variation;
-    channels[activeChannel]->setVariation(variation);
+}
+void Looper::setChannelVariation(int channel, int variation) {
+    channels[channel]->setVariation(variation);
+}
+int Looper::getChannelVariation(int channel) {
+    return channels[channel]->getVariation();
 }
 int Looper::getActiveChannel() {
     return activeChannel;
@@ -134,7 +143,8 @@ void Looper::setChannelSolo(int ch, bool solo) {
         if (channels[i]->solo) soloEnabled = true;
     }
     for (int i = 0; i < numChannels; i++) {
-        channels[i]->soloMute = soloEnabled ? !channels[i]->solo : false;
+        bool soloMute = soloEnabled ? !channels[i]->solo : false;
+        channels[i]->setSoloMute(soloMute);
     }
 }
 void Looper::setChannelVolume(int ch, float volume) {
@@ -216,4 +226,11 @@ void Looper::setAllVariations(int variation) {
     for (int i = 0; i < numChannels; i++) {
         channels[i]->setVariation(variation);
     }
+}
+bool Looper::isSlotEmpty(int channel, int variation) {
+    bool empty = true;
+    for (auto clip : clips) {
+        if (clip->getChannel() == channel && clip->getVariation() == variation) empty = false;
+    }
+    return empty;
 }

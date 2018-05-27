@@ -30,6 +30,7 @@ PitchDetector* pitchDetector;
 bool looperListening = false;
 bool vocoderEnabled = false;
 bool autotuneEnabled = true;
+float masterVolume = 1.0f;
 
 void midiCallback(double deltatime, vector<unsigned char> *message, void *userData)
 {
@@ -89,7 +90,7 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         }
 
         float looperSample = looper->process(inputSample);
-        outBuffer[i] = looperSample;
+        outBuffer[i] = looperSample * masterVolume;
     }
 
     if (vocoderEnabled && autotuneEnabled) {
@@ -171,19 +172,26 @@ void oscCallback(tosc_message* msg) {
 
         int chNum = tosc_getNextInt32(msg);
         int varNum = tosc_getNextInt32(msg);
-        looper->setActiveChannel(chNum);
-        looper->setActiveVariation(varNum);
+        if (continuousRec
+                || looper->getChannelVariation(chNum) == varNum
+                || looper->isSlotEmpty(chNum, varNum)) {
+            looper->setActiveChannel(chNum);
+            looper->setActiveVariation(varNum);
+        }
+        looper->setChannelVariation(chNum, varNum);
 
         if (continuousRec) {
             looper->startRec();
             osc->sendClipSummary(looper->getClipSummary().dump());
         }
         osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
+        osc->sendChannelSummary(looper->getChannelSummary().dump());
     }
     else if (address == "loopergroupvariation") {
         int varNum = tosc_getNextInt32(msg);
         looper->setAllVariations(varNum);
         osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
+        osc->sendChannelSummary(looper->getChannelSummary().dump());
     }
     else if (address == "clearchannel") {
         int chNum = tosc_getNextInt32(msg);
@@ -195,6 +203,7 @@ void oscCallback(tosc_message* msg) {
         int chNum = tosc_getNextInt32(msg);
         bool solo = tosc_getNextInt32(msg) == 1;
         looper->setChannelSolo(chNum, solo);
+        osc->sendChannelSummary(looper->getChannelSummary().dump());
     }
     else if (address == "getwidgets") {
         osc->sendJson(looper->getWidgetJSON().c_str());
@@ -258,6 +267,10 @@ void oscCallback(tosc_message* msg) {
 
         if (autotuneEnabled) targetFrequency = frequency;
         else vocoder->setBetaFactor(pitch);
+    }
+    else if (address == "mastervolume") {
+        float volume = tosc_getNextFloat(msg);
+        masterVolume = volume;
     }
 }
 

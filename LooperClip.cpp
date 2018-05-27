@@ -37,7 +37,7 @@ LooperChunk* LooperClip::getFirstChunk() {
 bool LooperClip::isLastChunk(LooperChunk* chunk) {
     return lastChunk == chunk;
 }
-float LooperClip::renderVoices() {
+float LooperClip::renderVoices(bool unmute) {
     float result = 0;
     auto voiceIt = std::begin(voices);
     while (voiceIt != std::end(voices)) {
@@ -52,6 +52,23 @@ float LooperClip::renderVoices() {
             ++voiceIt;
         }
     }
+
+    // Prevent clicking noise when switching between variations
+
+    setUnmuteSoft(unmute);
+
+    if (unmute && graceRoundCountdown) {
+        result *= ((float)(graceRoundCeil - graceRoundCountdown) / graceRoundCeil);
+        graceRoundCountdown--;
+    }
+    else if (!unmute && graceRoundCountdown) {
+        result *= ((float)graceRoundCountdown / graceRoundCeil);
+        graceRoundCountdown--;
+    }
+    else if (!unmute) {
+        result = 0;
+    }
+
     return result;
 }
 bool LooperClip::isPlaying() {
@@ -109,4 +126,14 @@ void LooperClip::recorderNotify() {
 }
 int LooperClip::getRecorderNotifications() {
     return recorderNotifications;
+}
+void LooperClip::setUnmuteHard(bool unmute) {
+    this->unmute = unmute;
+}
+void LooperClip::setUnmuteSoft(bool unmute) {
+    if (unmute != this->unmute) {
+        if (graceRoundCountdown) graceRoundCountdown = graceRoundCeil - graceRoundCountdown;
+        else graceRoundCountdown = graceRoundCeil;
+        this->unmute = unmute;
+    }
 }

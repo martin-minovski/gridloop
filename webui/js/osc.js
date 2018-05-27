@@ -12,10 +12,11 @@ socket.on('cppinput', function (data) {
             }
 
             volumeSliders[index].value = channel.volume;
-            soloButtons[index].state = channel.solo;
+            if (channel.solo) soloButtons[index].turnOn(false);
+            else soloButtons[index].turnOff(false);
         });
     }
-    if (data.address === 'active') {
+    else if (data.address === 'active') {
         var channel = data.args[0].value;
         var variation = data.args[1].value;
         gridItems[activeChannel][activeVariation].element.css('border-radius', '1px').find('.square-cover').css('border-radius', '1px');
@@ -23,7 +24,7 @@ socket.on('cppinput', function (data) {
         activeVariation = variation;
         gridItems[channel][variation].element.css('border-radius', '100px').find('.square-cover').css('border-radius', '100px');
     }
-    if (data.address === 'json_clipsummary') {
+    else if (data.address === 'json_clipsummary') {
         for (var i = 0; i < 8; i++) {
             for (var j = 0; j < 4; j++) {
                 gridItems[i][j].element.find('.square-cover').show();
@@ -44,26 +45,26 @@ socket.on('cppinput', function (data) {
             if (master) gridItems[channel][variation].element.find('.square-master').show();
         });
     }
-    if (data.address === 'faust_ack') {
+    else if (data.address === 'faust_ack') {
         if (!saveRequested) return;
         saveRequested = false;
         updateAllWidgets();
         alert("Compiled with no errors!");
     }
-    if (data.address === 'faust_code') {
+    else if (data.address === 'faust_code') {
         if (!editRequested) return;
         editRequested = false;
         var channel = data.args[0].value;
         var code = data.args[1].value;
         faustOpen(channel, code);
     }
-    if (data.address === 'faust_error') {
+    else if (data.address === 'faust_error') {
         if (!saveRequested) return;
         saveRequested = false;
         updateAllWidgets();
         alert(data.args[0].value);
     }
-    if (data.address === 'json_update') {
+    else if (data.address === 'json_update') {
         initWidgetsArray();
         var jsonString = data.args[0].value;
         var widgets = JSON.parse(jsonString);
@@ -192,7 +193,7 @@ socket.on('cppinput', function (data) {
             }
         }
     }
-    if (data.address === 'json_instruments') {
+    else if (data.address === 'json_instruments') {
         var jsonString = data.args[0].value;
         var data = JSON.parse(jsonString);
         instruments = data;
@@ -206,12 +207,10 @@ socket.on('cppinput', function (data) {
         var instrumentSelect = new Nexus.Select('#instrument-select',{
             'size': [120,25],
             'options': dropdownStrings
-        })
+        });
         styllize(instrumentSelect);
         instrumentSelect.on('change',function(value) {
-            console.log(value.value);
             var data = value.value.split(' ')[0];
-            console.log(data);
             data = data.split('/');
             var bankNum = data[0];
             var instrNum = data[1];
@@ -229,5 +228,14 @@ socket.on('cppinput', function (data) {
                 ]
             });
         });
+    }
+    else if (data.address === 'recstate_update') {
+        var state = data.args[0].value;
+        if (state) {
+            recButton.turnOn(false);
+        }
+        else {
+            recButton.turnOff(false);
+        }
     }
 });

@@ -37,6 +37,7 @@ public:
     void sendClipSummary(string json);
     void sendChannelSummary(string json);
     void sendActive(int channel, int variation);
+    void sendRecUpdate(bool state);
 };
 
 

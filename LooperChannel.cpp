@@ -39,18 +39,33 @@ bool LooperChannel::reloadDSPFile() {
     return true;
 }
 float LooperChannel::process(float sample) {
-    float input = soloMute ? 0 : sample;
     float output = 0;
+
     if (leftChannel) {
-        faustInL[0] = input;
+        faustInL[0] = sample;
         output = faustOutL[0] * volume;
     }
     else {
-        faustInR[0] = input;
+        faustInR[0] = sample;
         output = faustOutR[0] * volume;
         if (faustDSP != nullptr) faustDSP->compute(bufferSize, faustIn, faustOut);
     }
     leftChannel = !leftChannel;
+
+
+    // Prevent clicking noise when (un)muting / (un)soloing channels
+
+    if (!muteFinal && graceRoundCountdown) {
+        output *= ((float)(graceRoundCeil - graceRoundCountdown) / graceRoundCeil);
+        graceRoundCountdown--;
+    }
+    else if (muteFinal && graceRoundCountdown) {
+        output *= ((float)graceRoundCountdown / graceRoundCeil);
+        graceRoundCountdown--;
+    }
+    else if (muteFinal) {
+        output = 0;
+    }
 
     return output;
 }
@@ -68,4 +83,19 @@ int LooperChannel::getVariation() {
 }
 float LooperChannel::getVolume() {
     return volume;
+}
+void LooperChannel::setSoloMute(bool soloMute) {
+    this->soloMute = soloMute;
+    setFinalMuteSoft(soloMute || muteMute);
+}
+void LooperChannel::setMute(bool mute) {
+    this->muteMute = mute;
+    setFinalMuteSoft(soloMute || muteMute);
+}
+void LooperChannel::setFinalMuteSoft(bool mute) {
+    if (mute != muteFinal) {
+        if (graceRoundCountdown) graceRoundCountdown = graceRoundCeil - graceRoundCountdown;
+        else graceRoundCountdown = graceRoundCeil;
+        this->muteFinal = mute;
+    }
 }

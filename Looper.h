@@ -26,6 +26,7 @@ class Looper {
     LooperChannel* channels[NUMBER_OF_LOOPER_CHANNELS];
     int numChannels = NUMBER_OF_LOOPER_CHANNELS;
     unsigned int sampleRate;
+    OSC* osc;
 public:
     Looper(OSC* osc, unsigned int sampleRate);
     float process(float sample);
@@ -46,6 +47,9 @@ public:
     void storeWidgetAutomation(long pointer, float value);
     bool isRecording();
     void setAllVariations(int variation);
+    void setChannelVariation(int channel, int variation);
+    int getChannelVariation(int channel);
+    bool isSlotEmpty(int channel, int variation);
 };
 
 

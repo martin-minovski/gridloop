@@ -84,16 +84,8 @@ function editDSP(channel) {
 }
 
 function styllize(object) {
-    var colors = {
-        "accent": "#232b2b",
-        "fill": "#dc3d24",
-        // "light": "#ffb745",
-        "dark": "black",
-        "mediumLight": "black",
-        // "mediumDark": "#594d46"
-    };
-    for (var type in colors) {
-        object.colorize(type, colors[type]);
+    for (var type in nexusUIcolors) {
+        object.colorize(type, nexusUIcolors[type]);
     }
 }
 
@@ -106,6 +98,7 @@ function setBlur(value) {
         .css('oFilter',filterVal)
         .css('msFilter',filterVal);
 }
+
 function activateChannel(channel, variation) {
     socket.emit('ui', {
         address: 'looperchannel',
@@ -120,7 +113,6 @@ function activateChannel(channel, variation) {
             }
         ]
     });
-    getChannelSummary();
 }
 
 function updateAllWidgets() {
@@ -214,7 +206,6 @@ function loopGroupCtrl(variation) {
             }
         ]
     });
-    getChannelSummary();
 }
 
 function zoomIn() {
@@ -231,4 +222,9 @@ function zoomControl(factor) {
     $('.grid')
         .css('zoom', factor.toString())
         .css('transform', '-moz-scale(' + factor.toString() + ')');
+}
+
+function toggleSolo(ch) {
+    if (soloButtons[ch].state) soloButtons[ch].turnOff();
+    else soloButtons[ch].turnOn();
 }
