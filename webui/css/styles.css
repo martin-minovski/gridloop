@@ -387,4 +387,5 @@ body {
     right: 75px;
     margin-top: -21px;
     color: rgba(255, 255, 255, 0.8);
+    pointer-events: none;
 }
