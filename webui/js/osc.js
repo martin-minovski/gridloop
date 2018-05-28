@@ -93,7 +93,10 @@ socket.on('cppinput', function (data) {
                 if (!axisX) axisX = axisZ;
                 if (!axisX) continue;
 
-                var widgetDiv = $('<div style="font-size: 10px;">' + j + '<br /><div class="widget-div" id="' + widgetID + '"></div></div>');
+                var widgetDiv = $('<div style="font-size: 10px;">' + j + '<br />' +
+                    '<div class="widget-div" id="' + widgetID + '"></div>' +
+                    '<div class="widget-value"></div>' +
+                    '</div>');
                 widgetContainer.append(widgetDiv);
 
                 if (axisX.type === 'slider') {
@@ -108,8 +111,10 @@ socket.on('cppinput', function (data) {
                     nexusUiWidget.on('change',function(value) {
                         var widget = widgetIDs[this.settings.target];
                         updateFaustZone(widget[0].zone, value);
+                        $(this.settings.target).parent().find('.widget-value').html(value.toFixed(2).replace(/[.,]00$/, ""));
                     });
                     styllize(nexusUiWidget);
+                    $('#' + widgetID).parent().find('.widget-value').html(axisX.value.toFixed(2).replace(/[.,]00$/, ""));
                 }
                 else if (axisX.type === 'xypad') {
                     var nexusUiWidget = new Nexus.Position('#' + widgetID, {

@@ -292,10 +292,6 @@ body {
     }
 }
 
-#instrument-select>select {
-    border-radius: 7px;
-}
-
 .clear-clips-icon {
     cursor: pointer;
     transition: .5s ease-in-out;
@@ -312,17 +308,17 @@ body {
 }
 #instrument-select {
     display: inline-block;
+    /*position: relative;*/
+    /*font-size: 18px;*/
+    /*top: -4px;*/
+    /*padding: 0 4px 0 4px;*/
 }
 #instrument-select,
 #instrument-select>select {
-    height: 18px !important;
-    width: 18px !important;
-}
-#instrument-select {
-    position: relative;
-    font-size: 18px;
-    top: -4px;
-    padding: 0 4px 0 4px;
+    /*height: 18px !important;*/
+    /*width: 18px !important;*/
+    border-radius: 7px;
+    background-color: white !important;
 }
 .loop-group-control {
     padding: 5px 0;
@@ -384,4 +380,11 @@ body {
     font-size: 9px;
     top: -13px;
     right: 1px;
+}
+
+.widget-value {
+    position: absolute;
+    right: 75px;
+    margin-top: -21px;
+    color: rgba(255, 255, 255, 0.8);
 }
