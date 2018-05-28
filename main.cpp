@@ -14,6 +14,8 @@
 #include "PitchDetector.h"
 #include "Theremin.h"
 #include <cmath>
+#include "AudioFile.h"
+#include <time.h>
 
 #define MIDI_ENABLED
 //#define MIDI_DEBUG
@@ -65,6 +67,9 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
 
 float targetFrequency = 440;
 
+AudioFile<float> audioFile;
+int wavSample = 0;
+
 int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
            double streamTime, RtAudioStreamStatus status, void *userData) {
 
@@ -75,14 +80,25 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         cout << "Stream underflow detected!" << endl;
     }
 
+    // Extend WAV buffer
+    audioFile.setNumSamplesPerChannel(wavSample + nBufferFrames);
+
     float fftSample = 0;
     for (int i = 0; i < nBufferFrames * 2; i++) {
+        int channel = i % 2;
+        int sample = i / 2;
+
         float tsfSample = SFSynth::getNextSample();
-        float inputSample = (float) inBuffer[(i / 2) * 2];
+
+        // Get left input channel only
+        float inputSample = (float) inBuffer[(sample) * 2];
+
+        // Mix
         inputSample += tsfSample;
 
         if (vocoderEnabled) {
-            if (i % 2 == 0) {
+            // Apply only on left channel
+            if (channel == 0) {
                 fftSample = vocoder->processSample(inputSample);
                 pitchDetector->process(inputSample);
             }
@@ -91,6 +107,10 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 
         float looperSample = looper->process(inputSample);
         outBuffer[i] = looperSample * masterVolume;
+
+        // Write samples to audiofile buffer
+        audioFile.samples[channel][wavSample] = (float)outBuffer[i];
+        if (channel == 1) wavSample++;
     }
 
     if (vocoderEnabled && autotuneEnabled) {
@@ -279,6 +299,10 @@ int main() {
     unsigned int sampleRate = 44100;
     unsigned int bufferFrames = 256;
 
+    audioFile.setBitDepth(16);
+    audioFile.setSampleRate(sampleRate);
+    audioFile.setNumChannels(2);
+
     SFSynth::init(sampleRate * 2, bufferFrames);
     osc = new OSC(oscCallback);
     looper = new Looper(osc, sampleRate);
@@ -318,5 +342,15 @@ int main() {
     cin.get(input);
     audioEngine->shutDown();
     osc->closeSocket();
+
+    // Save wav file
+    time_t rawtime;
+    struct tm * timeinfo;
+    char dateBuffer [80];
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(dateBuffer, 80, "wav/%c.wav",timeinfo);
+    audioFile.save(dateBuffer);
+
     return 0;
 }
