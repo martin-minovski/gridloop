@@ -42,13 +42,17 @@ float LooperChannel::process(float sample) {
     float output = 0;
 
     if (leftChannel) {
-        faustInL[0] = sample;
-        output = faustOutL[0] * volume;
+        faustInL[bufferCounter] = sample;
+        output = faustOutL[bufferCounter] * volume;
     }
     else {
-        faustInR[0] = sample;
-        output = faustOutR[0] * volume;
-        if (faustDSP != nullptr) faustDSP->compute(bufferSize, faustIn, faustOut);
+        faustInR[bufferCounter] = sample;
+        output = faustOutR[bufferCounter] * volume;
+        bufferCounter++;
+        if (bufferCounter == FAUST_BUFFER_SIZE) {
+            if (faustDSP != nullptr) faustDSP->compute(bufferSize, faustIn, faustOut);
+            bufferCounter = 0;
+        }
     }
     leftChannel = !leftChannel;
 

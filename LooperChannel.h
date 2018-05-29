@@ -12,7 +12,7 @@
 #include "OSC.h"
 #include "Theremin.h"
 
-#define FAUST_BUFFER_SIZE 1
+#define FAUST_BUFFER_SIZE 32
 
 class LooperChannel {
     int id;
@@ -28,6 +28,7 @@ class LooperChannel {
     float faustOutL[FAUST_BUFFER_SIZE];
     float faustOutR[FAUST_BUFFER_SIZE];
     int bufferSize = FAUST_BUFFER_SIZE;
+    int bufferCounter = 0;
     float leftChannel = true;
     float* faustIn[2] = {faustInL, faustInR};
     float* faustOut[2] = {faustOutL, faustOutR};
