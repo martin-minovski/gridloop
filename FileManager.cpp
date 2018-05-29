@@ -17,3 +17,12 @@ void FileManager::writeFaustCode(int channel, string code) {
     out << code;
     out.close();
 }
+void FileManager::writeWaveFile(AudioFile<float> *audioFile, string path) {
+    time_t rawtime;
+    struct tm * timeinfo;
+    char dateBuffer [80];
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(dateBuffer, 80, path.c_str(), timeinfo);
+    audioFile->save(dateBuffer);
+}

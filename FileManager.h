@@ -7,12 +7,15 @@
 
 #include <string>
 #include <fstream>
+#include <time.h>
+#include "AudioFile.h"
 using namespace std;
 
 class FileManager {
 public:
     string getFaustCode(int channel);
     void writeFaustCode(int channel, string code);
+    void writeWaveFile(AudioFile<float>* audioFile, string path);
 };
 
 

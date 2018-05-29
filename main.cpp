@@ -17,7 +17,6 @@
 #include "Theremin.h"
 #include <cmath>
 #include "AudioFile.h"
-#include <time.h>
 
 #define MIDI_ENABLED
 //#define MIDI_DEBUG
@@ -346,13 +345,7 @@ int main() {
     osc->closeSocket();
 
     // Save wav file
-    time_t rawtime;
-    struct tm * timeinfo;
-    char dateBuffer [80];
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    strftime(dateBuffer, 80, "wav/%c.wav",timeinfo);
-    audioFile.save(dateBuffer);
+    fileManager->writeWaveFile(&audioFile, "wav/%c.wav");
 
     return 0;
 }
