@@ -1,3 +1,7 @@
+//
+// LoopGrid by Martin Minovski, 2018
+//
+
 var LOOPER_CHANNELS = 8;
 var socket = io('/');
 var editor = ace.edit("faust-editor");

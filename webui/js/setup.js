@@ -1,3 +1,7 @@
+//
+// LoopGrid by Martin Minovski, 2018
+//
+
 $(document).ready(function() {
 
     initWidgetsArray();

@@ -1,4 +1,6 @@
-
+//
+// LoopGrid by Martin Minovski, 2018
+//
 
 #include <iostream>
 
@@ -297,7 +299,7 @@ void oscCallback(tosc_message* msg) {
 int main() {
     // Audio parameters
     unsigned int sampleRate = 44100;
-    unsigned int bufferFrames = 256;
+    unsigned int bufferFrames = 128;
 
     audioFile.setBitDepth(16);
     audioFile.setSampleRate(sampleRate);

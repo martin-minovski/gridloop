@@ -1,5 +1,5 @@
 //
-// Created by martin on 4/24/18.
+// LoopGrid by Martin Minovski, 2018
 //
 
 #ifndef RTPIANO_LOOPER_H

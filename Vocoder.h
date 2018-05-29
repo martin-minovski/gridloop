@@ -1,5 +1,5 @@
 //
-// Created by martin on 4/28/18.
+// LoopGrid by Martin Minovski, 2018
 //
 
 #ifndef RTPIANO_VOCODER_H

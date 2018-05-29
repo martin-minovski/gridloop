@@ -1,8 +1,6 @@
-/**
- * Websockets / OSC glue program
- * Created by Martin on 4/28/18.
- */
-
+//
+// LoopGrid by Martin Minovski, 2018
+//
 
 var express = require('express');
 var app = express();

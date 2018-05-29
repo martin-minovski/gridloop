@@ -1,5 +1,5 @@
 //
-// Created by martin on 5/2/18.
+// LoopGrid by Martin Minovski, 2018
 //
 
 #include "LooperChannel.h"

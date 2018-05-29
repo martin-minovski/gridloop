@@ -1,5 +1,5 @@
 //
-// Created by martin on 5/10/18.
+// LoopGrid by Martin Minovski, 2018
 //
 
 #ifndef RTPIANO_PITCHDETECTOR_H

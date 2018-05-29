@@ -1,3 +1,6 @@
+//
+// LoopGrid by Martin Minovski, 2018
+//
 
 function getCurrentScale() {
     return zoomFactor;

@@ -1,7 +1,6 @@
 //
-// Created by martin on 4/28/18.
+// LoopGrid by Martin Minovski, 2018
 //
-
 
 #include "SFSynth.h"
 #define TSF_IMPLEMENTATION

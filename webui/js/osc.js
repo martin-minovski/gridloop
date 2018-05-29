@@ -1,3 +1,7 @@
+//
+// LoopGrid by Martin Minovski, 2018
+//
+
 socket.on('cppinput', function (data) {
     if (data.address === 'json_channelsummary') {
         for (var i = 0; i < 8; i++) {
