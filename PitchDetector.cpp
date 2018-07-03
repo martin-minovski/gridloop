@@ -1,5 +1,6 @@
 //
 // LoopGrid by Martin Minovski, 2018
+// NOTE: This is part of a SMSA miniproject
 //
 
 #include "PitchDetector.h"

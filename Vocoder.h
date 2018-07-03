@@ -1,5 +1,6 @@
 //
 // LoopGrid by Martin Minovski, 2018
+// NOTE: This is part of a SMSA miniproject
 //
 
 #ifndef RTPIANO_VOCODER_H
@@ -32,8 +33,8 @@ class Vocoder {
     Bin nextShifted[fftSize];
     float mag[fftSize];
 
-    // TODO: NexusUI
-    bool stateSwitch = true;
+    bool linearInterpolation = true;
+    bool parabolaFit = true;
     float gBetaFactor = 0.75f;
 
     kiss_fft_cfg inFFT;
@@ -56,7 +57,8 @@ public:
     float processSample(float &sample);
     void processFrequencyDomain(kiss_fft_cpx* cpx);
     void setBetaFactor(float newBetaFactor);
-    void switchState(bool state);
+    void setLinearInterpolation(bool value);
+    void setParabolaFit(bool value);
 };
 
 

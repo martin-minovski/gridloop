@@ -21,7 +21,7 @@ var saveRequested = false;
 var activeChannel = 0;
 var activeVariation = 0;
 var zoomFactor = 1;
-var zoomStep = 0.25;
+var zoomStep = 0.18;
 var gridItems = [];
 var recButton;
 var shiftPressed = false;

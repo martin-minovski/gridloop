@@ -32,8 +32,12 @@ PitchDetector* pitchDetector;
 
 bool looperListening = false;
 bool vocoderEnabled = false;
-bool autotuneEnabled = true;
+bool autotuneEnabled = false;
 float masterVolume = 1.0f;
+float thereminVolume = 1.0f;
+float vocoderUpperThreshold = 20000;
+bool vocoderMixOriginal = false;
+bool sustainPedalAsLooper = false;
 
 void midiCallback(double deltatime, vector<unsigned char> *message, void *userData)
 {
@@ -47,12 +51,27 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
     }
 #endif
     int pitch = message->at(1);
+
     if (pitch == 1) {
         vocoder->setBetaFactor(0.95f + ((float)message->at(2) / 1280.0f));
     }
     else if (message->at(0) == 176) {
+
+    if (!sustainPedalAsLooper) {
         if (message->at(2) > 0) SFSynth::sustainOn();
         else SFSynth::sustainOff();
+    }
+    else {
+        if (message->at(2) == 127) {
+            if (looper->isRecording()) {
+                looper->stopRec();
+                osc->sendClipSummary(looper->getClipSummary().dump());
+            } else {
+                looper->startRec();
+            }
+        }
+    }
+
     }
     else {
         if (message->at(2) == 0) SFSynth::noteOff(pitch);
@@ -91,11 +110,14 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 
         float tsfSample = SFSynth::getNextSample();
 
-        // Get left input channel only
+        // Get left audio input channel only
         float inputSample = (float) inBuffer[(sample) * 2];
 
-        // Mix
+        // Mix with SF
         inputSample += tsfSample;
+
+        // Process DSP
+        inputSample = looper->process(inputSample) * masterVolume;
 
         if (vocoderEnabled) {
             // Apply only on left channel
@@ -103,21 +125,25 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
                 fftSample = vocoder->processSample(inputSample);
                 pitchDetector->process(inputSample);
             }
-            inputSample += fftSample;
+
+            if (vocoderMixOriginal) inputSample += (1.3*fftSample);
+            else inputSample = fftSample;
         }
 
-        float looperSample = looper->process(inputSample);
-        outBuffer[i] = looperSample * masterVolume;
-
         // Write samples to audiofile buffer
-        audioFile.samples[channel][wavSample] = (float)outBuffer[i];
+        audioFile.samples[channel][wavSample] = inputSample;
         if (channel == 1) wavSample++;
+
+        // Submit
+        outBuffer[i] = inputSample;
     }
 
     if (vocoderEnabled && autotuneEnabled) {
         float currentPitch = pitchDetector->getPitch();
         float ratio = targetFrequency / currentPitch;
-        vocoder->setBetaFactor(ratio);
+        if (currentPitch < vocoderUpperThreshold) {
+            vocoder->setBetaFactor(ratio);
+        }
     }
 
     osc->oscListen();
@@ -137,6 +163,8 @@ void oscCallback(tosc_message* msg) {
         int meta = tosc_getNextInt32(msg);
         if (type == "vocoder") {
             vocoder->setBetaFactor(value);
+//            vocoderUpperThreshold = value;
+            cout<<"New vocoder threshold: "<<value<<endl;
         }
         if (type == "sfgain") {
             SFSynth::setGain(value);
@@ -155,7 +183,7 @@ void oscCallback(tosc_message* msg) {
                 looper->startRec();
                 looperListening = false;
             }
-            targetFrequency = (float)(pow(2, ((float)(pitch + octaveShift * 12)-69)/12) * 440);
+//            targetFrequency = (float)(pow(2, ((float)(pitch + octaveShift * 12)-69)/12) * 440);
         }
         else {
             SFSynth::noteOff(pitch + octaveShift * 12);
@@ -250,8 +278,27 @@ void oscCallback(tosc_message* msg) {
     }
     else if (address == "vocoderswitch") {
         bool state = tosc_getNextInt32(msg) == 1;
-        vocoder->switchState(state);
         vocoderEnabled = state;
+    }
+    else if (address == "vocoderinterpolation") {
+        bool state = tosc_getNextInt32(msg) == 1;
+        vocoder->setLinearInterpolation(state);
+    }
+    else if (address == "vocoderparabola") {
+        bool state = tosc_getNextInt32(msg) == 1;
+        vocoder->setParabolaFit(state);
+    }
+    else if (address == "vocodermix") {
+        bool state = tosc_getNextInt32(msg) == 1;
+        vocoderMixOriginal = state;
+    }
+    else if (address == "vocoderautotune") {
+        bool state = tosc_getNextInt32(msg) == 1;
+        autotuneEnabled = state;
+    }
+    else if (address == "pedallooper") {
+        bool state = tosc_getNextInt32(msg) == 1;
+        sustainPedalAsLooper = state;
     }
     else if (address == "getinstruments") {
         osc->sendInstruments(SFSynth::getInstruments().dump());
@@ -286,8 +333,9 @@ void oscCallback(tosc_message* msg) {
         thereminValues[i++] = imuZ;
         Theremin::setValues(thereminValues);
 
-        if (autotuneEnabled) targetFrequency = frequency;
+        if (autotuneEnabled) targetFrequency = frequency / 2;
         else vocoder->setBetaFactor(pitch);
+        thereminVolume = (fsr3) * 3;
     }
     else if (address == "mastervolume") {
         float volume = tosc_getNextFloat(msg);
@@ -310,7 +358,7 @@ int main() {
     vocoder = new Vocoder();
     pitchDetector = new PitchDetector(sampleRate, 2048);
     fileManager = new FileManager();
-    audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::LINUX_ALSA);
+    audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::UNIX_JACK);
 
 #ifdef MIDI_ENABLED
     // Initialize MIDI listener

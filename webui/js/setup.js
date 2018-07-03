@@ -202,6 +202,92 @@ $(document).ready(function() {
     });
     styllize(vocoderSwitch);
 
+    var interpolationSwitch = new Nexus.Toggle('#vocoder-interpolation-switch', {
+        'size': [20, 20],
+        'state': true
+    });
+    interpolationSwitch.on('change',function(value) {
+        socket.emit('ui', {
+            address: 'vocoderinterpolation',
+            args: [
+                {
+                    type: 'integer',
+                    value: value ? 1 : 0
+                }
+            ]
+        });
+    });
+    styllize(interpolationSwitch);
+
+    var parabolaSwitch = new Nexus.Toggle('#vocoder-parabola-switch', {
+        'size': [20, 20],
+        'state': true
+    });
+    parabolaSwitch.on('change',function(value) {
+        socket.emit('ui', {
+            address: 'vocoderparabola',
+            args: [
+                {
+                    type: 'integer',
+                    value: value ? 1 : 0
+                }
+            ]
+        });
+    });
+    styllize(parabolaSwitch);
+
+    var autotuneSwitch = new Nexus.Toggle('#vocoder-autotune-switch', {
+        'size': [20, 20],
+        'state': false
+    });
+    autotuneSwitch.on('change',function(value) {
+        socket.emit('ui', {
+            address: 'vocoderautotune',
+            args: [
+                {
+                    type: 'integer',
+                    value: value ? 1 : 0
+                }
+            ]
+        });
+    });
+    styllize(autotuneSwitch);
+
+    var mixSwitch = new Nexus.Toggle('#vocoder-mix', {
+        'size': [20, 20],
+        'state': false
+    });
+    mixSwitch.on('change',function(value) {
+        socket.emit('ui', {
+            address: 'vocodermix',
+            args: [
+                {
+                    type: 'integer',
+                    value: value ? 1 : 0
+                }
+            ]
+        });
+    });
+    styllize(mixSwitch);
+
+
+    var pedalLooper = new Nexus.Toggle('#pedal-looper', {
+        'size': [20, 20],
+        'state': false
+    });
+    pedalLooper.on('change',function(value) {
+        socket.emit('ui', {
+            address: 'pedallooper',
+            args: [
+                {
+                    type: 'integer',
+                    value: value ? 1 : 0
+                }
+            ]
+        });
+    });
+    styllize(pedalLooper);
+
     var wrapper = $('.loop-grid-wrapper');
     for (var i = 0; i < 8*4; i++) {
         var thisChannel = i % 8;

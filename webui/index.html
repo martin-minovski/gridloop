@@ -67,11 +67,34 @@
                                     <i class="fas fa-plus"></i>
                                 </div>
                             </span>
-                            <div slider="vocoder" min="0" max="2" value="1" step="0.001" sizeX="100" sizeY="20" style="display:inline-block"></div>
+                            <div slider="vocoder" min="0" max="3" value="1" step="0.001" sizeX="100" sizeY="20" style="display:inline-block"></div>
                             <div id="vocoder-switch" style="display:inline-block"></div>
                         </div>
                         <div class="zoomViewport">
                             <div id="piano"></div>
+                        </div>
+                    </div>
+                    <div class="grid-item item grid-item-padded" style="background-color: #f1f1f1; color: white;">
+                        <div class="title"><div style="font-size: 10px; color: black;">Miscellaneous</div></div>
+                        <div style="color: black; text-align: left; font-size: 12px;">
+                            <div id="vocoder-interpolation-switch" style="display: inline"></div>
+                            Peak-shift linear interpolation
+                        </div>
+                        <div style="color: black; text-align: left; font-size: 12px;">
+                            <div id="vocoder-parabola-switch" style="display: inline"></div>
+                            Fit a parabola for sinusoid frequency est.
+                        </div>
+                        <div style="color: black; text-align: left; font-size: 12px;">
+                            <div id="vocoder-autotune-switch" style="display: inline"></div>
+                            Enable autotune (aubio YinFFT)
+                        </div>
+                        <div style="color: black; text-align: left; font-size: 12px;">
+                            <div id="vocoder-mix" style="display: inline"></div>
+                            Mix with original signal
+                        </div>
+                        <div style="color: black; text-align: left; font-size: 12px;">
+                            <div id="pedal-looper" style="display: inline"></div>
+                            Use sustain pedal as looper footswitch
                         </div>
                     </div>
                     <div class="grid-item item grid-item-padded" style="background-color: #f5f5f5;">

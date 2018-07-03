@@ -1,11 +1,12 @@
 //
 // LoopGrid by Martin Minovski, 2018
+// NOTE: This is part of a SMSA miniproject
 //
 
 #include "Vocoder.h"
 
 Vocoder::Vocoder() {
-    // Init shiftedBy
+    // Init previous frame
     for (int n = 0; n < fftSize; n++) {
         prevFrame[n].shiftedBy = 0;
         prevFrame[n].phase = 0;
@@ -14,7 +15,6 @@ Vocoder::Vocoder() {
 
     // Calculate a Hann window
     for (int n = 0; n < fftSize; n++) {
-//        hannWindow[n] = 0.5 * (1 - cos(2 * M_PI * j / (fftSize - 1)));
         hannWindow[n] = 0.5f * (1.0f - cosf(2.0 * M_PI * n / (float) (fftSize - 1)));
     }
 
@@ -65,11 +65,6 @@ float Vocoder::processSample(float &sample) {
 
         kiss_fft(outFFT, cpxBuffer, cpxBufferOut);
 
-        // Frame-synchronous time-domain amplitude modulation for the peak-shift linear interpolation
-        for (int n = 0; n < fftSize; n++) {
-            cpxBufferOut[n].r = cpxBufferOut[n].r * sinf((float)M_PI * ((float)n / (float)fftSize));
-        }
-
         // Scale and overlap-add
         for (int j = 0; j < fftSize; j++) {
             cpxBufferOut[j].r *= 0.0005f;
@@ -99,7 +94,6 @@ bool isEmpty(kiss_fft_cpx& complex) {
 void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
 
     float localBetaFactor = gBetaFactor;
-    float localBetaSecond = gBetaFactor * 1.3333f;
 
     // Initialize
     for (int n = 0; n < fftSize; n++) {
@@ -151,13 +145,10 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
 
     // Estimate precise peak location
     for (int n = 0; n < fftSize; n++) {
-
-        if (stateSwitch) {
+        if (parabolaFit) {
             if (nextFrame[n].peak == n) {
-                // Quadratic
+                // Quadratic parabola
                 float d = (mag[n+1] - mag[n-1]) / (2 * (2 * mag[n] - mag[n-1] - mag[n+1]));
-                // Barycentric
-//                float d = (mag[n+1] - mag[n-1]) / (mag[n] + mag[n-1] + mag[n+1]);
                 nextFrame[n].precisePeak = n + d;
             }
         }
@@ -186,7 +177,7 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
         // Apply linear interpolation
         float x = newPeakLocation - precisePeakLocation;
         if (shiftIndex >= 0 && shiftIndex < fftSize) {
-            if (stateSwitch) {
+            if (linearInterpolation) {
                 if (x >= 0 && n > 0) {
                     float additionR = 0;
                     float additionI = 0;
@@ -224,11 +215,13 @@ void Vocoder::processFrequencyDomain(kiss_fft_cpx *cpx) {
         std::complex<float> ccpx(nextShifted[n].complex.r, nextShifted[n].complex.i);
         float magnitude = abs(ccpx);
 
-            // Ugly crash fix
+            // Temporary crash workaround
             int nextPeak = nextShifted[n].peak;
             if (nextPeak < 0 || nextPeak >= fftSize) continue;
 
-        float phase = prevFrame[nextPeak].phase + ((2 * (float)M_PI * nextShifted[n].shiftedBy) / fftSize) * hopSize;
+        float phase =
+                prevFrame[nextPeak].phase
+                + ((2 * (float)M_PI * nextShifted[n].shiftedBy) / fftSize) * hopSize;
         ccpx = polar(magnitude, phase + arg(ccpx));
         nextShifted[n].complex.r = real(ccpx);
         nextShifted[n].complex.i = imag(ccpx);
@@ -250,6 +243,10 @@ void Vocoder::setBetaFactor(float newBetaFactor) {
     gBetaFactor = newBetaFactor;
 }
 
-void Vocoder::switchState(bool state) {
-    stateSwitch = state;
+void Vocoder::setLinearInterpolation(bool value) {
+    linearInterpolation = value;
+}
+
+void Vocoder::setParabolaFit(bool value) {
+    parabolaFit = value;
 }
