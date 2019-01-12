@@ -25,7 +25,7 @@ void FaustUI::declare(float * zone, const char * key, const char * val) {
         newWidget->setType(val);
     }
     else if (strcmp(key, "id") == 0) {
-        newWidget->setId(*val - '0');
+        newWidget->setId(atoi(val));
     }
 }
 

@@ -21,7 +21,7 @@
 #include "MidiMessage.h"
 
 #define MIDI_ENABLED
-#define MIDI_DEBUG
+//#define MIDI_DEBUG
 
 using namespace std;
 
@@ -41,10 +41,11 @@ float vocoderUpperThreshold = 20000;
 bool vocoderMixOriginal = false;
 bool sustainPedalAsLooper = false;
 bool lineIn = true;
-float sfSynthVolume = 1.0f;
+float sfSynthVolume = 1.5f;
 RtMidiOut *midiOut;
 double midiNumb = 0;
-double inputVolume = 1.0f;
+double inputVolume = 0.25f;
+float inputDryWet = 0;
 
 int convertMidiValue(int value, double deviation) {
     if (deviation < -100 || deviation > 100) {
@@ -81,10 +82,11 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
             masterVolume = float(value) / 64;
         }
         if (id == 21) {
-            SFSynth::setPreset(0, value);
+//            vocoder->setBetaFactor(0.95f + ((float)value / 1280.0f));
+            sfSynthVolume = float(value) / 40;
         }
         if (id == 22) {
-            vocoder->setBetaFactor(0.95f + ((float)value / 1280.0f));
+            SFSynth::setPreset(0, value);
         }
         if (id == 23) {
             midiNumb = (((double)value / 128) - 0.5) * 200;
@@ -93,9 +95,12 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
         if (id == 24) {
             inputVolume = float(value) / 127;
         }
+        if (id == 25) {
+            inputDryWet = float(value) / 127;
+        }
         else {
             looper->FaustCC(id, value);
-            cout << "Faust CC " << id << "=" << value << endl;
+//            cout << "Faust CC " << id << "=" << value << endl;
         }
     }
     else if (message->at(0) == 144) {
@@ -191,35 +196,39 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 
         float tsfSample = SFSynth::getNextSample();
         tsfSample *= 0.45;
+        tsfSample *= sfSynthVolume;
 
-        // Get left audio input channel only
         float inputSample = (float) inBuffer[i];
         if (!lineIn) inputSample = 0;
         else inputSample *= inputVolume;
 
-        // Mix with SF
-        inputSample += tsfSample * sfSynthVolume;
 
         // Process DSP
-        inputSample = looper->process(inputSample);
+        float processedSample = looper->process(
+                inputDryWet*inputSample +
+                (1.0f-inputDryWet)*tsfSample
+        );
+        float result = processedSample
+                + inputDryWet*tsfSample
+                + (1.0f-inputDryWet)*inputSample;
 
         if (vocoderEnabled) {
             // Apply only on left channel
             if (channel == 0) {
-                fftSample = vocoder->processSample(inputSample);
-                pitchDetector->process(inputSample);
+                fftSample = vocoder->processSample(result);
+                pitchDetector->process(result);
             }
 
-            if (vocoderMixOriginal) inputSample += (1.3*fftSample);
+            if (vocoderMixOriginal) result += (1.3*fftSample);
             else inputSample = fftSample;
         }
 
         // Write samples to audiofile buffer
-        audioFile.samples[channel][wavSample] = inputSample;
+        audioFile.samples[channel][wavSample] = result;
         if (channel == 1) wavSample++;
 
         // Submit
-        outBuffer[i] = inputSample * masterVolume;
+        outBuffer[i] = result * masterVolume;
     }
 
     if (vocoderEnabled && autotuneEnabled) {
@@ -438,7 +447,7 @@ void oscCallback(tosc_message* msg) {
 int main() {
     // Audio parameters
     unsigned int sampleRate = 44100;
-    unsigned int bufferFrames = 256;
+    unsigned int bufferFrames = 128;
 
     audioFile.setBitDepth(16);
     audioFile.setSampleRate(sampleRate);
@@ -467,7 +476,7 @@ int main() {
     }
     else {
         cout << nPortsIn << " input MIDI port(s) available\n";
-        midiIn->openPort(nPortsIn - 1);
+        midiIn->openPort(nPortsIn - 2);
         midiIn->setCallback(&midiCallback);
 
         // Ignore sysex, timing, or active sensing messages:

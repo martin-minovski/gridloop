@@ -56,11 +56,14 @@ void SFSynth::init(unsigned int sampleRate, unsigned int _bufferSize) {
 }
 void SFSynth::setPreset(int bank, int preset) {
     panic();
-    if (bank == 127) {
-        tsfDrumPreset = tsf_get_presetindex(tsfObj(tsfPtr), bank, preset);
-    }
-    else {
-        tsfPreset = tsf_get_presetindex(tsfObj(tsfPtr), bank, preset);
+    if (getInstruments()[std::to_string(bank)] != NULL && getInstruments()[std::to_string(bank)][std::to_string(preset)] != NULL) {
+        if (bank == 127) {
+            tsfDrumPreset = tsf_get_presetindex(tsfObj(tsfPtr), bank, preset);
+        }
+        else {
+            tsfPreset = tsf_get_presetindex(tsfObj(tsfPtr), bank, preset);
+        }
+        cout << "Instrument: " << tsf_bank_get_presetname(tsfObj(tsfPtr), bank, preset) << endl;
     }
 }
 void SFSynth::noteOn(int pitch, int velocity) {
@@ -134,8 +137,12 @@ json SFSynth::getInstruments() {
                 bank[to_string(j)] = string(name);
                 empty = false;
             }
+            else {
+                bank[to_string(j)] = NULL;
+            }
         }
         if (!empty) result[to_string(i)] = bank;
+        else result[to_string(i)] = NULL;
     }
     return result;
 }

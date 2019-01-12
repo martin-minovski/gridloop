@@ -43,14 +43,37 @@
     <!-- Swiper -->
     <div class="swiper-container">
         <div class="swiper-wrapper">
-            <div class="swiper-slide">
-                <div id="wheel-piano"></div>
-                <div id="wheel">
-                    ^
-                </div>
-            </div>
             <div class="swiper-slide noncentered-slide">
                 <div class="grid" id="masterContainer">
+                    <div class="grid-item item grid-item-padded" style="background-color: #f5f5f5;">
+                        <div class="title"><div style="font-size: 10px;">Channel levels</div></div>
+                        <div id="looper-channel-holder"></div>
+                        <div id="master-volume-holder">
+                            <div id="master-volume-title">
+                                Master
+                            </div>
+                            <div id="master-volume"></div>
+                        </div>
+                    </div>
+                    <div class="grid-item item grid-item-padded" style="background-color: #f1f1f1; color: white;">
+
+                        <div style="position: absolute; right: 6px; top: 0;">
+                            <br />
+                            <div id="looper-rec" style="margin-bottom: 8px"></div>
+                            <div id="looper-clear">
+                                <i class="fas fa-2x fa-ban clear-clips-icon" onclick="clearClips()"></i>
+                            </div>
+                            <div id="midi-rec-switch">MIDI</div>
+                        </div>
+                        <div class="title"><div style="font-size: 10px;">Loop Grid</div></div>
+                        <div class="loop-grid-wrapper"></div>
+                        <div class="loop-group-control">
+                            <div class="loop-group-control-btn" onpointerdown="loopGroupCtrl(0)">X</div>
+                            <div class="loop-group-control-btn" onpointerdown="loopGroupCtrl(1)">A</div>
+                            <div class="loop-group-control-btn" onpointerdown="loopGroupCtrl(2)">B</div>
+                            <div class="loop-group-control-btn" onpointerdown="loopGroupCtrl(3)">C</div>
+                        </div>
+                    </div>
                     <div style="background-color: #f1f1f1" class="grid-item item grid-item-padded">
                         <div style="position: absolute; margin-top: -15px;">
 
@@ -108,46 +131,23 @@
                         </div>
                     </div>
                     <div class="grid-item item grid-item-padded" style="background-color: #f1f1f1; color: white;">
-                        <div id="sf-volume-holder" style="">
+                        <div id="sf-volume-holder" style="color:black">
                             <div id="sf-volume-title">
                                 SF Volume
                             </div>
                             <div id="sf-volume"></div>
                         </div>
                     </div>
-                    <div class="grid-item item grid-item-padded" style="background-color: #f5f5f5;">
-                        <div class="title"><div style="font-size: 10px;">Channel levels</div></div>
-                        <div id="looper-channel-holder"></div>
-                        <div id="master-volume-holder">
-                            <div id="master-volume-title">
-                                Master
-                            </div>
-                            <div id="master-volume"></div>
-                        </div>
-                    </div>
-                    <div class="grid-item item grid-item-padded" style="background-color: #f1f1f1; color: white;">
-
-                        <div style="position: absolute; right: 6px; top: 0;">
-                            <br />
-                            <div id="looper-rec" style="margin-bottom: 8px"></div>
-                            <div id="looper-clear">
-                                <i class="fas fa-2x fa-ban clear-clips-icon" onclick="clearClips()"></i>
-                            </div>
-                            <div id="midi-rec-switch">MIDI</div>
-                        </div>
-                        <div class="title"><div style="font-size: 10px;">Loop Grid</div></div>
-                        <div class="loop-grid-wrapper"></div>
-                        <div class="loop-group-control">
-                            <div class="loop-group-control-btn" onpointerdown="loopGroupCtrl(0)">X</div>
-                            <div class="loop-group-control-btn" onpointerdown="loopGroupCtrl(1)">A</div>
-                            <div class="loop-group-control-btn" onpointerdown="loopGroupCtrl(2)">B</div>
-                            <div class="loop-group-control-btn" onpointerdown="loopGroupCtrl(3)">C</div>
-                        </div>
-                    </div>
                 </div>
             </div>
             <div class="swiper-slide noncentered-slide">
                 <div class="grid" id="mainContainer" style="color: white"></div>
+            </div>
+            <div class="swiper-slide">
+                <div id="wheel-piano"></div>
+                <div id="wheel">
+                    ^
+                </div>
             </div>
         </div>
 
