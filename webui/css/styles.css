@@ -393,3 +393,22 @@ body {
     color: rgba(255, 255, 255, 0.8);
     pointer-events: none;
 }
+
+#wheel {
+    height: 300px;
+    width: 300px;
+    border-radius: 999999px;
+    background-color: #eee;
+    transform-origin: center;
+}
+
+#wheel-piano {
+    position: absolute;
+    background: url("../img/piano.png");
+    background-size: contain;
+    height: 600px;
+    width: 600px;
+    transform-origin: center;
+    transform: rotate(2deg);
+    z-index: 0;
+}

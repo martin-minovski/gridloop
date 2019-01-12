@@ -50,6 +50,10 @@ public:
     void setChannelVariation(int channel, int variation);
     int getChannelVariation(int channel);
     bool isSlotEmpty(int channel, int variation);
+    void faustNoteOn(int pitch, int velocity);
+    void faustNoteOff(int pitch);
+    void faustSustain(bool value);
+    void FaustCC(int id, int value);
 };
 
 

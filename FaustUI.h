@@ -42,6 +42,10 @@ public:
     virtual void addSoundfile(const char* label, const char* filename, Soundfile** sf_zone) {};
 
 
+    void faustNoteOn(int pitch, int velocity);
+    void faustNoteOff(int pitch);
+    void faustSustain(bool value);
+    void FaustCC(int id, int value);
 
 };
 

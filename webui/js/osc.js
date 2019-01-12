@@ -247,4 +247,16 @@ socket.on('cppinput', function (data) {
             recButton.turnOff(false);
         }
     }
+    else if (data.elements && data.elements[0] && data.elements[0].address === '/theremin') {
+        var fsr1 = data.elements[0].args[5].value;
+        var fsr2 = data.elements[0].args[6].value;
+        var fsr3 = data.elements[0].args[7].value;
+
+        var degrees = -(data.elements[0].args[0].value - Math.PI) * (180 / Math.PI) - 85;
+
+        wheel.css({'transform' : 'rotate(' + degrees + 'deg)'});
+    }
+    else {
+        console.log('Unknown OSC message received', data)
+    }
 });

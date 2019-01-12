@@ -24,6 +24,7 @@ var zoomFactor = 1;
 var zoomStep = 0.18;
 var gridItems = [];
 var recButton;
+var wheel;
 var shiftPressed = false;
 for (var i = 0; i < 8; i++) {
     gridItems[i] = [];

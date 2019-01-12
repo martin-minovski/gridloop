@@ -103,3 +103,15 @@ void LooperChannel::setFinalMuteSoft(bool mute) {
         this->muteFinal = mute;
     }
 }
+void LooperChannel::faustNoteOn(int pitch, int velocity) {
+    faustUI.faustNoteOn(pitch, velocity);
+}
+void LooperChannel::faustNoteOff(int pitch) {
+    faustUI.faustNoteOff(pitch);
+}
+void LooperChannel::faustSustain(bool value) {
+    faustUI.faustSustain(value);
+}
+void LooperChannel::FaustCC(int id, int value) {
+    faustUI.FaustCC(id, value);
+}

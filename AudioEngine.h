@@ -11,6 +11,8 @@
 
 class AudioEngine {
     RtAudio* dac;
+    bool usbFound = false;
+    unsigned int usbDeviceId = 0;
 public:
     AudioEngine(unsigned int sampleRate, unsigned int bufferFrames, RtAudioCallback render, RtAudio::Api api);
     void probeDevices();

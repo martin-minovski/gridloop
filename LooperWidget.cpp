@@ -19,6 +19,15 @@ void LooperWidget::setParams(const char* name, float* zone, float min, float max
 void LooperWidget::setAxis(const char* axis) {
     this->axis = *axis - 'x';
 }
+void LooperWidget::setId(const int id) {
+    this->id = id;
+}
+int LooperWidget::getId() {
+    return this->id;
+}
+char* LooperWidget::getType() {
+    return this->type;
+}
 void LooperWidget::setType(const char* type) {
     this->type = strdup(type);
 

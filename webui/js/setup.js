@@ -288,6 +288,25 @@ $(document).ready(function() {
     });
     styllize(pedalLooper);
 
+
+    var lineIn = new Nexus.Toggle('#line-in', {
+        'size': [20, 20],
+        'state': false
+    });
+    lineIn.on('change',function(value) {
+        socket.emit('ui', {
+            address: 'linein',
+            args: [
+                {
+                    type: 'integer',
+                    value: value ? 1 : 0
+                }
+            ]
+        });
+    });
+    styllize(lineIn);
+
+
     var wrapper = $('.loop-grid-wrapper');
     for (var i = 0; i < 8*4; i++) {
         var thisChannel = i % 8;
@@ -391,7 +410,7 @@ $(document).ready(function() {
         'size': [30, 150],
         'mode': 'relative',
         'min': 0,
-        'max': 1.2,
+        'max': 5,
         'step': 0,
         'value': 1
     });
@@ -408,5 +427,27 @@ $(document).ready(function() {
     });
     styllize(masterVolume);
 
+    // var sfVolume = new Nexus.Slider('#sf-volume' ,{
+    //     'size': [150, 30],
+    //     'mode': 'relative',
+    //     'min': 0,
+    //     'max': 2,
+    //     'step': 0,
+    //     'value': 1
+    // });
+    // sfVolume.on('change',function(val) {
+    //     socket.emit('ui', {
+    //         address: 'sfvolume',
+    //         args: [
+    //             {
+    //                 type: 'float',
+    //                 value: val
+    //             }
+    //         ]
+    //     });
+    // });
+    // styllize(sfVolume);
+
+    wheel = $('#wheel');
     // Setup complete
 });

@@ -18,11 +18,21 @@ int SFSynth::bufferCounter;
 int SFSynth::sustained[127];
 bool SFSynth::isSustaining;
 int SFSynth::tsfPreset;
+int SFSynth::tsfDrumPreset = 0;
 float SFSynth::gain;
 int SFSynth::presetCount;
 thread SFSynth::workerThread;
 std::future<void> SFSynth::future;
+int SFSynth::currentPreset = 0;
+int SFSynth::currentBank = 0;
 
+static void nextInstrument() {
+    SFSynth::currentPreset++;
+    SFSynth::setPreset(0, ++SFSynth::currentPreset);
+}
+static void prevInstrument() {
+    if (SFSynth::currentPreset > 0) SFSynth::setPreset(0, --SFSynth::currentPreset);
+}
 static tsf* tsfObj(long long ptr) {
     return (tsf*)ptr;
 }
@@ -46,11 +56,21 @@ void SFSynth::init(unsigned int sampleRate, unsigned int _bufferSize) {
 }
 void SFSynth::setPreset(int bank, int preset) {
     panic();
-    tsfPreset = tsf_get_presetindex(tsfObj(tsfPtr), bank, preset);
+    if (bank == 127) {
+        tsfDrumPreset = tsf_get_presetindex(tsfObj(tsfPtr), bank, preset);
+    }
+    else {
+        tsfPreset = tsf_get_presetindex(tsfObj(tsfPtr), bank, preset);
+    }
 }
 void SFSynth::noteOn(int pitch, int velocity) {
     tsf_note_off(tsfObj(tsfPtr), tsfPreset, pitch);
     tsf_note_on(tsfObj(tsfPtr), tsfPreset, pitch, (velocity+1)/128.0f);
+    sustained[pitch] = false;
+}
+void SFSynth::drumOn(int pitch, int velocity) {
+    tsf_note_off(tsfObj(tsfPtr), tsfDrumPreset, pitch);
+    tsf_note_on(tsfObj(tsfPtr), tsfDrumPreset, pitch, (velocity+1)/128.0f);
     sustained[pitch] = false;
 }
 void SFSynth::noteOff(int pitch) {

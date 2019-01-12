@@ -35,10 +35,14 @@ public:
     static int presetCount;
     static thread workerThread;
     static std::future<void> future;
+    static int tsfDrumPreset;
+    static int currentPreset;
+    static int currentBank;
 
     static void init(unsigned int sampleRate, unsigned int _bufferSize);
     static void setPreset(int bank, int preset);
     static void noteOn(int pitch, int velocity);
+    static void drumOn(int pitch, int velocity);
     static void noteOff(int pitch);
     static void sustainOn();
     static void sustainOff();
@@ -47,6 +51,8 @@ public:
     static void panic();
     static json getInstruments();
     static void renderWorker();
+    static void nextInstrument();
+    static void prevInstrument();
 };
 
 #endif //RTPIANO_SFSYNTH_H

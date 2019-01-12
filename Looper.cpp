@@ -234,3 +234,21 @@ bool Looper::isSlotEmpty(int channel, int variation) {
     }
     return empty;
 }
+void Looper::faustNoteOn(int pitch, int velocity) {
+    for (int i = 0; i < numChannels; i++) {
+        channels[i]->faustNoteOn(pitch, velocity);
+    }
+}
+void Looper::faustNoteOff(int pitch) {
+    for (int i = 0; i < numChannels; i++) {
+        channels[i]->faustNoteOff(pitch);
+    }
+}
+void Looper::faustSustain(bool value) {
+    for (int i = 0; i < numChannels; i++) {
+        channels[i]->faustSustain(value);
+    }
+}
+void Looper::FaustCC(int id, int value) {
+    channels[activeChannel]->FaustCC(id, value);
+}

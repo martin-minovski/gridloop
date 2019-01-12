@@ -28,9 +28,13 @@ class LooperWidget {
     char* type;
     int looperChannel = 0;
 
+    // MIDI CC key
+    int id = -1;
+
 public:
     LooperWidget(int channel);
     void setParams(const char* name, float* zone, float min, float max, float step);
+    char* getType();
     void setType(const char* type);
     void setAxis(const char* axis);
     void printData();
@@ -38,6 +42,8 @@ public:
     bool isSync();
     void setValue(float value);
     void setNormalValue(float value);
+    void setId(int id);
+    int getId();
 };
 
 

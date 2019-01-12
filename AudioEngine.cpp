@@ -16,15 +16,17 @@ AudioEngine::AudioEngine(unsigned int sampleRate, unsigned int bufferFrames, RtA
 
     printCurrentAudioDriver();
 
-//    probeDevices();
+    probeDevices();
 
     RtAudio::StreamParameters parametersOut;
-    parametersOut.deviceId = dac->getDefaultOutputDevice();
+    if (usbFound) parametersOut.deviceId = usbDeviceId;
+    else parametersOut.deviceId = dac->getDefaultOutputDevice();
     parametersOut.nChannels = 2;
     parametersOut.firstChannel = 0;
 
     RtAudio::StreamParameters parametersIn;
-    parametersIn.deviceId = dac->getDefaultInputDevice();
+    if (usbFound) parametersIn.deviceId = usbDeviceId;
+    else parametersIn.deviceId = dac->getDefaultInputDevice();
     parametersIn.nChannels = 2;
     parametersIn.firstChannel = 0;
 
@@ -63,6 +65,10 @@ void AudioEngine::probeDevices() {
         info = dac->getDeviceInfo(i);
 
         std::cout << "\nDevice Name = " << info.name << '\n';
+        if (info.name.find("JACK") != std::string::npos) {
+            usbDeviceId = i;
+//            usbFound = true;
+        }
         if ( info.probed == false )
             std::cout << "Probe Status = UNsuccessful\n";
         else {

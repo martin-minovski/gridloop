@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "rtaudio/RtAudio.h"
-#include "stk/RtMidi.h"
+#include "rtmidi/RtMidi.h"
 
 #include "Looper.h"
 #include "Vocoder.h"
@@ -17,9 +17,11 @@
 #include "Theremin.h"
 #include <cmath>
 #include "AudioFile.h"
+#include "LooperChannel.h"
+#include "MidiMessage.h"
 
 #define MIDI_ENABLED
-//#define MIDI_DEBUG
+#define MIDI_DEBUG
 
 using namespace std;
 
@@ -38,6 +40,28 @@ float thereminVolume = 1.0f;
 float vocoderUpperThreshold = 20000;
 bool vocoderMixOriginal = false;
 bool sustainPedalAsLooper = false;
+bool lineIn = true;
+float sfSynthVolume = 1.0f;
+RtMidiOut *midiOut;
+double midiNumb = 0;
+double inputVolume = 1.0f;
+
+int convertMidiValue(int value, double deviation) {
+    if (deviation < -100 || deviation > 100) {
+        cout<<"Value must be between -100 and 100: "<<deviation;
+    }
+
+    double minMidiValue = 0;
+    double maxMidiValue = 127;
+    double midMidiValue = 63.5;
+
+    // This is our control point for the quadratic bezier curve
+    // We want this to be between 0 (min) and 63.5 (max)
+    double controlPointX = midMidiValue + ((deviation / 100) * midMidiValue);
+    double t = (double)value / maxMidiValue;
+    int delta = (int)round((2 * (1 - t) * t * controlPointX) + (t * t * maxMidiValue));
+    return (value - delta) + value;
+}
 
 void midiCallback(double deltatime, vector<unsigned char> *message, void *userData)
 {
@@ -50,42 +74,99 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
         cout << "stamp = " << deltatime << endl;
     }
 #endif
-    int pitch = message->at(1);
-
-    if (pitch == 1) {
-        vocoder->setBetaFactor(0.95f + ((float)message->at(2) / 1280.0f));
-    }
-    else if (message->at(0) == 176) {
-
-    if (!sustainPedalAsLooper) {
-        if (message->at(2) > 0) SFSynth::sustainOn();
-        else SFSynth::sustainOff();
-    }
-    else {
-        if (message->at(2) == 127) {
-            if (looper->isRecording()) {
-                looper->stopRec();
-                osc->sendClipSummary(looper->getClipSummary().dump());
-            } else {
-                looper->startRec();
-            }
+    if (message->at(0) == 176) {
+        int id = message->at(1);
+        int value = message->at(2);
+        if (id == 20) {
+            masterVolume = float(value) / 64;
+        }
+        if (id == 21) {
+            SFSynth::setPreset(0, value);
+        }
+        if (id == 22) {
+            vocoder->setBetaFactor(0.95f + ((float)value / 1280.0f));
+        }
+        if (id == 23) {
+            midiNumb = (((double)value / 128) - 0.5) * 200;
+            cout << "New deviation: " << midiNumb << endl;
+        }
+        if (id == 24) {
+            inputVolume = float(value) / 127;
+        }
+        else {
+            looper->FaustCC(id, value);
+            cout << "Faust CC " << id << "=" << value << endl;
         }
     }
+    else if (message->at(0) == 144) {
+        int pitch = message->at(1);
+        int velocity = message->at(2);
+        SFSynth::noteOn(pitch, convertMidiValue(velocity, midiNumb));
+        return;
+        midiOut->sendMessage(message);
+//        if (message->at(1) == 64) {
+//            // Sustain
+//
+//            if (!sustainPedalAsLooper) {
+//                if (message->at(2) > 0) {
+//                    looper->faustSustain(1);
+//                    SFSynth::sustainOn();
+//                }
+//                else {
+//                    looper->faustSustain(0);
+//                    SFSynth::sustainOff();
+//                }
+//            }
+//            else {
+//                if (message->at(2) == 127) {
+//                    if (looper->isRecording()) {
+//                        looper->stopRec();
+//                        osc->sendClipSummary(looper->getClipSummary().dump());
+//                    } else {
+//                        looper->startRec();
+//                    }
+//                }
+//            }
+//        }
+//        else if (message->at(1) == 7) {
+//            // Slider
+//            looper->FaustCC(message->at(2));
+//        }
 
     }
-    else {
-        if (message->at(2) == 0) SFSynth::noteOff(pitch);
-        else  {
-            SFSynth::noteOn(pitch, message->at(2));
-            if (looperListening) {
-                looper->startRec();
-                looperListening = false;
-            }
-        }
+    else if (message->at(0) == 128) {
+        int pitch = message->at(1);
+        SFSynth::noteOff(pitch);
+        return;
+        midiOut->sendMessage(message);
+//        if (message->at(2) == 0) {
+//            looper->faustNoteOff(pitch);
+//            SFSynth::noteOff(pitch);
+//        }
+//        else  {
+//            int velocity = message->at(2);
+//            looper->faustNoteOn(pitch, velocity);
+//            SFSynth::noteOn(pitch, velocity);
+//
+//            if (looperListening) {
+//                looper->startRec();
+//                looperListening = false;
+//            }
+//        }
     }
 }
 
-float targetFrequency = 440;
+void midiCallbackDrum(double deltatime, vector<unsigned char> *message, void *userData) {
+    if (message->at(0) == 153) {
+        int pitch = message->at(1);
+        if (pitch == 22) pitch = 42;
+        int velocity = message->at(2);
+        SFSynth::drumOn(pitch, velocity);
+        cout<<"Pitch: "<<pitch<<", velocity: "<<velocity<<endl;
+    }
+}
+
+float targetFrequency = 300;
 
 AudioFile<float> audioFile;
 int wavSample = 0;
@@ -109,15 +190,18 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         int sample = i / 2;
 
         float tsfSample = SFSynth::getNextSample();
+        tsfSample *= 0.45;
 
         // Get left audio input channel only
-        float inputSample = (float) inBuffer[(sample) * 2];
+        float inputSample = (float) inBuffer[i];
+        if (!lineIn) inputSample = 0;
+        else inputSample *= inputVolume;
 
         // Mix with SF
-        inputSample += tsfSample;
+        inputSample += tsfSample * sfSynthVolume;
 
         // Process DSP
-        inputSample = looper->process(inputSample) * masterVolume;
+        inputSample = looper->process(inputSample);
 
         if (vocoderEnabled) {
             // Apply only on left channel
@@ -135,7 +219,7 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         if (channel == 1) wavSample++;
 
         // Submit
-        outBuffer[i] = inputSample;
+        outBuffer[i] = inputSample * masterVolume;
     }
 
     if (vocoderEnabled && autotuneEnabled) {
@@ -300,6 +384,14 @@ void oscCallback(tosc_message* msg) {
         bool state = tosc_getNextInt32(msg) == 1;
         sustainPedalAsLooper = state;
     }
+    else if (address == "linein") {
+        bool state = tosc_getNextInt32(msg) == 1;
+        lineIn = state;
+    }
+    else if (address == "sfvolume") {
+        float value = tosc_getNextFloat(msg);
+        sfSynthVolume = value;
+    }
     else if (address == "getinstruments") {
         osc->sendInstruments(SFSynth::getInstruments().dump());
     }
@@ -346,7 +438,7 @@ void oscCallback(tosc_message* msg) {
 int main() {
     // Audio parameters
     unsigned int sampleRate = 44100;
-    unsigned int bufferFrames = 128;
+    unsigned int bufferFrames = 256;
 
     audioFile.setBitDepth(16);
     audioFile.setSampleRate(sampleRate);
@@ -364,17 +456,36 @@ int main() {
     // Initialize MIDI listener
     RtMidiIn *midiIn = new RtMidiIn();
     // Check available ports.
-    unsigned int nPorts = midiIn->getPortCount();
-    if ( nPorts == 0 ) {
-        cout << "No ports available!\n";
+//    midiIn->openPort(16, "Extra A");
+//    midiIn->openPort(17, "Extra B");
+//    midiIn->openPort(18, "Extra C");
+//    midiIn->openPort(19, "Extra D");
+    unsigned int nPortsIn = midiIn->getPortCount();
+    unsigned int nPortsOut = midiIn->getPortCount();
+    if ( nPortsIn == 0 ) {
+        cout << "No input MIDI ports available!\n";
     }
     else {
-        cout << nPorts << " MIDI port(s) available\n";
-        midiIn->openPort(nPorts - 1);
+        cout << nPortsIn << " input MIDI port(s) available\n";
+        midiIn->openPort(nPortsIn - 1);
         midiIn->setCallback(&midiCallback);
 
         // Ignore sysex, timing, or active sensing messages:
         midiIn->ignoreTypes(true, true, true);
+
+//            RtMidiIn *midiInDrum = new RtMidiIn();
+//            unsigned int nPortsDrum = midiInDrum->getPortCount();
+//            midiInDrum->openPort(nPortsDrum - 2);
+//            midiInDrum->setCallback(&midiCallbackDrum);
+//            midiInDrum->ignoreTypes(true, true, true);
+    }
+
+    if ( nPortsOut == 0 ) {
+        cout << "No output MIDI ports available!\n";
+    }
+    else {
+        cout << nPortsOut << " output MIDI port(s) available\n";
+//        midiOut->openPort(1);
     }
 #endif
 

@@ -51,6 +51,10 @@ public:
     float getVolume();
     void setSoloMute(bool soloMute);
     void setMute(bool mute);
+    void faustNoteOn(int pitch, int velocity);
+    void faustNoteOff(int pitch);
+    void faustSustain(bool value);
+    void FaustCC(int id, int value);
 };
 
 
