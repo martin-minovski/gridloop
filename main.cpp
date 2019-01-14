@@ -173,17 +173,17 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
             recHeld = false;
         }
         else if (msg->getChannel() > 0 && message->at(1) >= 110 && message->at(1) <= 117) {
-            int drumPitch = 35 + (message->at(1)-110)*2 + (msg->getChannel()-1)*3;
+            int drumPitch = 36 + (message->at(1)-110)*2 + (msg->getChannel()-1)*3;
             if (message->at(2) > 0) {
                 if (id == 113) pushRec();
+                else if (id == 117) pushShift();
                 else {
                     noteOn(drumPitch, message->at(2));
                     cout<< "Drum " << drumPitch << endl;
-                    if (id == 117) pushShift();
                 }
             }
             else {
-//                noteOff(drumPitch);
+                noteOff(drumPitch);
             }
         }
         else if (id >= 20 && id <= 27 && shiftHeld) {
