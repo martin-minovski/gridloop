@@ -112,6 +112,6 @@ void LooperChannel::faustNoteOff(int pitch) {
 void LooperChannel::faustSustain(bool value) {
     faustUI.faustSustain(value);
 }
-void LooperChannel::FaustCC(int id, int value) {
-    faustUI.FaustCC(id, value);
+std::vector<long> LooperChannel::FaustCC(int id, int value, int channel) {
+    return faustUI.FaustCC(id, value, channel);
 }

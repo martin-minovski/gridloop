@@ -54,7 +54,7 @@ public:
     void faustNoteOn(int pitch, int velocity);
     void faustNoteOff(int pitch);
     void faustSustain(bool value);
-    void FaustCC(int id, int value);
+    std::vector<long> FaustCC(int id, int value, int channel);
 };
 
 

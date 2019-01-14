@@ -22,7 +22,7 @@
 
 #define MIDI_ENABLED
 //#define MIDI_DEBUG
-//#define USING_ALSA
+#define USING_ALSA
 
 using namespace std;
 
@@ -72,11 +72,49 @@ int convertMidiValue(int value, double deviation) {
     int delta = (int)round((2 * (1 - t) * t * controlPointX) + (t * t * maxMidiValue));
     return (value - delta) + value;
 }
-void instrCtrl(int key, int pageSize) {
-    int pageOffset = instrPage * pageSize;
-    int bank = (pageOffset + key) / 128;
-    int preset = (pageOffset + key) % 128;
-    SFSynth::setPreset(bank, preset);
+void noteOn(int pitch, int velocity) {
+    if (looperListening) {
+        looper->startRec();
+        looperListening = false;
+    }
+    SFSynth::noteOn(pitch + transpose, convertMidiValue(velocity, midiNumb));
+    looper->faustNoteOn(pitch + transpose, velocity);
+}
+void noteOff(int pitch) {
+    SFSynth::noteOff(pitch + transpose);
+    looper->faustNoteOff(pitch + transpose);
+}
+void pushRec() {
+    if (!shiftHeld) {
+        recHeld = true;
+        if (looper->isRecording()) {
+            looper->stopRec();
+            looperListening = false;
+        }
+        else {
+            if (looperListening) {
+                looperListening = false;
+                looper->startRec();
+            }
+            else looperListening = true;
+        }
+        osc->sendClipSummary(looper->getClipSummary().dump());
+    }
+    else {
+        looper->undo();
+        osc->sendClipSummary(looper->getClipSummary().dump());
+    }
+}
+void pushShift() {
+    // Shift always stops loper from listening
+    if (looperListening) looperListening = false;
+    if (!recHeld) {
+        shiftHeld = true;
+    }
+    else {
+        looper->clearAll();
+        osc->sendClipSummary(looper->getClipSummary().dump());
+    }
 }
 
 void midiCallback(double deltatime, vector<unsigned char> *message, void *userData)
@@ -134,49 +172,46 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
         else if (id == 113 && message->at(2) == 0) {
             recHeld = false;
         }
-        else if (message->at(2) != 0) {
-            // Pad on
-            if (id == 113) {
-                if (!shiftHeld) {
-                    // Record
-                    recHeld = true;
-                    if (looper->isRecording()) {
-                        looper->stopRec();
-                        looperListening = false;
-                    }
-                    else {
-                        if (looperListening) {
-                            looperListening = false;
-                            looper->startRec();
-                        }
-                        else looperListening = true;
-                    }
-                    osc->sendClipSummary(looper->getClipSummary().dump());
-                }
+        else if (msg->getChannel() > 0 && message->at(1) >= 110 && message->at(1) <= 117) {
+            int drumPitch = 35 + (message->at(1)-110)*2 + (msg->getChannel()-1)*3;
+            if (message->at(2) > 0) {
+                if (id == 113) pushRec();
                 else {
-                    looper->undo();
-                    osc->sendClipSummary(looper->getClipSummary().dump());
+                    noteOn(drumPitch, message->at(2));
+                    cout<< "Drum " << drumPitch << endl;
+                    if (id == 117) pushShift();
                 }
+            }
+            else {
+//                noteOff(drumPitch);
+            }
+        }
+        else if (id >= 20 && id <= 27 && shiftHeld) {
+            // All shifted knobs go Faust CC
+            looper->FaustCC(id - 19, message->at(2), looper->getActiveChannel());
+        }
+        else if (message->at(2) != 0) {
+            if (id == 113) {
+                pushRec();
             }
             else if (id == 117) {
-                if (!recHeld) {
-                    shiftHeld = true;
-                }
-                else {
-                    looper->clearAll();
-                    osc->sendClipSummary(looper->getClipSummary().dump());
-                }
+                pushShift();
             }
             else if (id == 20) {
-                masterVolume = float(value) / 64;
+                masterVolume = float(value) / 40;
             }
             else if (id == 21) {
                 sfSynthVolume = float(value) / 20;
                 // vocoder->setBetaFactor(0.95f + ((float)value / 1280.0f));
             }
-            else if (id == 22) {
-                looper->FaustCC(id, value);
-                // SFSynth::setPreset(0, value);
+            else if (id == 22 || id == 26 || id == 27 || id == 16 || id == 17) {
+                std::vector<long> zonesToAutomate = looper->FaustCC(id, value, looper->getActiveChannel());
+                auto zoneIt = std::begin(zonesToAutomate);
+                while (zoneIt != std::end(zonesToAutomate)) {
+                    auto zone = *zoneIt;
+                    looper->storeWidgetAutomation(zone, (*((float*)zone)));
+                    zoneIt++;
+                }
             }
             else if (id == 23) {
                 midiNumb = (((double)value / 128) - 0.5) * 200;
@@ -187,12 +222,6 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
             }
             else if (id == 25) {
                 inputDryWet = float(value) / 127;
-            }
-            else if (id == 26) {
-                looper->FaustCC(id, value);
-            }
-            else if (id == 27) {
-                looper->FaustCC(id, value);
             }
             else if (msg->getChannel() == 0) {
                 if (id == 110) {
@@ -229,16 +258,12 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
                 else if (id == 116) {}
             }
         }
-        else {
-            // Pad note off
-        }
     }
     else if (msg->isNoteOn()) {
         int pitch = message->at(1);
         int velocity = message->at(2);
         if (shiftHeld) {
             int absolutePitch = pitch % 12;
-            int instrOct =(pitch-24) / 12;
             if (absolutePitch == 8) {
                 transpose = 0;
                 SFSynth::panic();
@@ -252,45 +277,133 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
                 SFSynth::panic();
             }
             else if (absolutePitch == 1) {
-                if (instrPage > 0) instrPage--;
+                SFSynth::prevInstrument();
             }
             else if (absolutePitch == 3) {
-                instrPage++;
+                SFSynth::nextInstrument();
             }
-            else if (pitch >= 24 && pitch <= 96) {
-                int octSize = 7;
-                int pageSize = 36;
-                if (absolutePitch == 0) {
-                    instrCtrl(instrOct*octSize, pageSize);
-                }
-                else if (absolutePitch == 2) {
-                    instrCtrl(instrOct*octSize+1, pageSize);
-                }
-                else if (absolutePitch == 4) {
-                    instrCtrl(instrOct*octSize+2, pageSize);
-                }
-                else if (absolutePitch == 5) {
-                    instrCtrl(instrOct*octSize+3, pageSize);
-                }
-                else if (absolutePitch == 7) {
-                    instrCtrl(instrOct*octSize+4, pageSize);
-                }
-                else if (absolutePitch == 9) {
-                    instrCtrl(instrOct*octSize+5, pageSize);
-                }
-                else if (absolutePitch == 11) {
-                    instrCtrl(instrOct*octSize+6, pageSize);
-                }
+            // Basses 1
+            else if (pitch == 24) {
+                SFSynth::setPreset(0, 32);
+            }
+            else if (pitch == 26) {
+                SFSynth::setPreset(0, 33);
+            }
+            else if (pitch == 28) {
+                SFSynth::setPreset(0, 34);
+            }
+            else if (pitch == 29) {
+                SFSynth::setPreset(0, 35);
+            }
+            else if (pitch == 31) {
+                SFSynth::setPreset(0, 36);
+            }
+            else if (pitch == 33) {
+                SFSynth::setPreset(0, 37);
+            }
+            else if (pitch == 35) {
+                SFSynth::setPreset(0, 38);
+            }
+            // Drums
+            else if (pitch == 36) {
+                SFSynth::setPreset(128, 127);
+            }
+            else if (pitch == 38) {
+                SFSynth::setPreset(128, 24);
+            }
+            else if (pitch == 40) {
+                SFSynth::setPreset(128, 26);
+            }
+            else if (pitch == 41) {
+                SFSynth::setPreset(128, 27);
+            }
+            else if (pitch == 43) {
+                SFSynth::setPreset(128, 40);
+            }
+            else if (pitch == 45) {
+                SFSynth::setPreset(128, 57);
+            }
+            else if (pitch == 47) {
+                SFSynth::setPreset(128, 25);
+            }
+            // Basses 2
+            else if (pitch == 48) {
+                SFSynth::setPreset(2, 0);
+            }
+            else if (pitch == 50) {
+                SFSynth::setPreset(3, 0);
+            }
+            else if (pitch == 52) {
+                SFSynth::setPreset(4, 0);
+            }
+            else if (pitch == 53) {
+                SFSynth::setPreset(6, 0);
+            }
+            else if (pitch == 55) {
+                SFSynth::setPreset(8, 0);
+            }
+            else if (pitch == 57) {
+                SFSynth::setPreset(11, 0);
+            }
+            else if (pitch == 59) {
+                SFSynth::setPreset(13, 0);
+            }
+            // Keys
+            else if (pitch == 60) {
+                // Yamaha C5
+                SFSynth::setPreset(18, 0);
+            }
+            else if (pitch == 62) {
+                SFSynth::setPreset(18, 33);
+            }
+            else if (pitch == 64) {
+                SFSynth::setPreset(18, 81);
+            }
+            else if (pitch == 65) {
+                SFSynth::setPreset(20, 0);
+            }
+            else if (pitch == 67) {
+                SFSynth::setPreset(19, 80);
+            }
+            else if (pitch == 69) {
+                SFSynth::setPreset(19, 81);
+            }
+            else if (pitch == 71) {
+                SFSynth::setPreset(24, 61);
+            }
+            // Keys 2
+            else if (pitch == 72) {
+                SFSynth::setPreset(64, 16);
+            }
+            else if (pitch == 74) {
+                SFSynth::setPreset(16, 16);
+            }
+            else if (pitch == 76) {
+                SFSynth::setPreset(16, 18);
+            }
+            else if (pitch == 77) {
+                SFSynth::setPreset(16, 19);
+            }
+            else if (pitch == 79) {
+                SFSynth::setPreset(11, 124);
+            }
+            else if (pitch == 81) {
+                SFSynth::setPreset(0, 89);
+            }
+            else if (pitch == 83) {
+                SFSynth::setPreset(2, 92);
+            }
+            else if (pitch == 84) {
+                SFSynth::setPreset(8, 103);
+            }
+            else {
+                // Whatever
+                SFSynth::setPreset(0, pitch / 2);
             }
         }
         else {
             // Actual note on
-            if (looperListening) {
-                looper->startRec();
-                looperListening = false;
-            }
-            SFSynth::noteOn(pitch + transpose, convertMidiValue(velocity, midiNumb));
-            looper->faustNoteOn(pitch + transpose, velocity);
+            noteOn(pitch, velocity);
             return;
         }
 //        midiOut->sendMessage(message);
@@ -326,8 +439,7 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
     }
     else if (msg->isNoteOff()) {
         int pitch = message->at(1);
-        SFSynth::noteOff(pitch + transpose);
-        looper->faustNoteOff(pitch + transpose);
+        noteOff(pitch);
         return;
         midiOut->sendMessage(message);
 //        if (message->at(2) == 0) {
@@ -667,6 +779,7 @@ int main() {
     audioFile.setNumChannels(2);
 
     SFSynth::init(sampleRate * 2, bufferFrames);
+    SFSynth::setPreset(18, 0);
     osc = new OSC(oscCallback);
     looper = new Looper(osc, sampleRate);
     vocoder = new Vocoder();

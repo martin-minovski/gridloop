@@ -5,7 +5,7 @@
 #ifndef RTPIANO_OSC_H
 #define RTPIANO_OSC_H
 #define IN_BUFFER_SIZE 8192
-#define OUT_BUFFER_SIZE 32768
+#define OUT_BUFFER_SIZE 128000
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <unistd.h>

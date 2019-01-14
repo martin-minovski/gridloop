@@ -109,13 +109,16 @@ void FaustUI::faustSustain(bool value) {
         ++widgetIt;
     }
 }
-void FaustUI::FaustCC(int id, int value) {
+std::vector<long> FaustUI::FaustCC(int id, int value, int channel) {
+    std::vector<long> zones;
     auto widgetIt = std::begin(widgets);
     while (widgetIt != std::end(widgets)) {
         auto widget = *widgetIt;
-        if (strcmp(widget->getType(), "midicc") == 0 && id == widget->getId()) {
+        if (widget->getChannel() == channel && strcmp(widget->getType(), "midicc") == 0 && id == widget->getId()) {
             widget->setNormalValue(((float)value)/127);
+            zones.push_back(widget->getZone());
         }
         ++widgetIt;
     }
+    return zones;
 }

@@ -44,6 +44,8 @@ public:
     void setNormalValue(float value);
     void setId(int id);
     int getId();
+    long getZone();
+    int getChannel();
 };
 
 

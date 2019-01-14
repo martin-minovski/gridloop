@@ -47,7 +47,7 @@ void SFSynth::init(unsigned int sampleRate, unsigned int _bufferSize) {
     bufferSize = _bufferSize;
     bufferCounter = bufferSize;
     writingA = true;
-    tsfPtr = (long long)tsf_load_filename("sf2/nicekeys.sf2");
+    tsfPtr = (long long)tsf_load_filename("sf2/jaba.sf2");
     tsf_set_output(tsfObj(tsfPtr), TSF_STEREO_UNWEAVED, sampleRate, 0);
     for (int i = 0; i < 128; i++) {
         sustained[i] = 0;
@@ -131,7 +131,7 @@ void SFSynth::panic() {
 json SFSynth::getInstruments() {
     presetCount = tsf_get_presetcount(tsfObj(tsfPtr));
     json result = {};
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i <= 128; i++) {
         json bank = {};
         bool empty = true;
         for (int j = 0; j < 128; j++) {

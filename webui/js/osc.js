@@ -209,7 +209,10 @@ socket.on('cppinput', function (data) {
         var dropdownStrings = [];
         $.each(data, function(i, bank) {
             $.each(bank, function(j, instrument) {
-                dropdownStrings.push(i + '/' + j + " " + instrument);
+                if (instrument !== 0){
+                    console.log(i + "/" + j + "  " + instrument)
+                    dropdownStrings.push(i + '/' + j + " " + instrument);
+                }
             });
         });
         $('#instrument-select').html('');

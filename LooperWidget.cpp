@@ -77,3 +77,9 @@ void LooperWidget::setValue(float value) {
 void LooperWidget::setNormalValue(float value) {
     *zone = min + value * (max - min);
 }
+long LooperWidget::getZone() {
+    return (long)this->zone;
+}
+int LooperWidget::getChannel() {
+    return this->looperChannel;
+}

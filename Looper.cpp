@@ -216,12 +216,12 @@ void Looper::clearAll() {
     }
 }
 void Looper::undo() {
+    if (clips.empty()) return;
     auto clip = clips.back();
-    if (!clip) return;
     if (clip->isMaster()) masterClip = nullptr;
-    clip->purge();
     clips.pop_back();
-    delete clip;
+    clip->purge();
+//    delete clip;
 }
 void Looper::storeWidgetAutomation(long pointer, float value) {
     if (recordingClip) {
@@ -258,6 +258,6 @@ void Looper::faustSustain(bool value) {
         channels[i]->faustSustain(value);
     }
 }
-void Looper::FaustCC(int id, int value) {
-    channels[activeChannel]->FaustCC(id, value);
+std::vector<long> Looper::FaustCC(int id, int value, int channel) {
+    return channels[activeChannel]->FaustCC(id, value, channel);
 }
