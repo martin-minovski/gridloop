@@ -22,7 +22,7 @@ class Looper {
     vector<LooperClip*> clips;
     int timer = 0;
     int activeChannel = 0;
-    int activeVariation = 0;
+    int activeVariation;
     LooperChannel* channels[NUMBER_OF_LOOPER_CHANNELS];
     int numChannels = NUMBER_OF_LOOPER_CHANNELS;
     unsigned int sampleRate;
@@ -54,6 +54,8 @@ public:
     void faustNoteOff(int pitch);
     void faustSustain(bool value);
     void FaustCC(int id, int value);
+    void clearAll();
+    void undo();
 };
 
 

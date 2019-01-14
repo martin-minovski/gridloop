@@ -10,7 +10,7 @@ file(GLOB rtpiano_SRC
     "*.h"
     "*.cpp"
 )
-add_executable(rtpiano ${rtpiano_SRC} Looper.cpp Looper.h tinyosc.c tinyosc.h kiss_fft.c kiss_fft.h _kiss_fft_guts.h Vocoder.cpp Vocoder.h OSC.cpp OSC.h AudioEngine.cpp AudioEngine.h SFSynth.cpp SFSynth.h LooperChunk.cpp LooperChunk.h LooperClip.cpp LooperClip.h LooperVoice.cpp LooperVoice.h LooperChannel.cpp LooperChannel.h LooperWidget.cpp LooperWidget.h FaustUI.cpp FaustUI.h FileManager.cpp FileManager.h PitchDetector.cpp PitchDetector.h Theremin.cpp Theremin.h AudioFile.cpp AudioFile.h Binasc.cpp MidiEvent.cpp MidiEventList.cpp MidiFile.cpp MidiMessage.cpp Options.cpp)
+add_executable(rtpiano ${rtpiano_SRC} Looper.cpp Looper.h tinyosc.c tinyosc.h kiss_fft.c kiss_fft.h _kiss_fft_guts.h Vocoder.cpp Vocoder.h OSC.cpp OSC.h AudioEngine.cpp AudioEngine.h SFSynth.cpp SFSynth.h LooperChunk.cpp LooperChunk.h LooperClip.cpp LooperClip.h LooperVoice.cpp LooperVoice.h LooperChannel.cpp LooperChannel.h LooperWidget.cpp LooperWidget.h FaustUI.cpp FaustUI.h FileManager.cpp FileManager.h PitchDetector.cpp PitchDetector.h Theremin.cpp Theremin.h AudioFile.cpp AudioFile.h MidiMessage.cpp)
 
 target_link_libraries(rtpiano rtaudio)
 target_link_libraries(rtpiano rtmidi)

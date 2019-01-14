@@ -44,6 +44,7 @@ public:
     static void noteOn(int pitch, int velocity);
     static void drumOn(int pitch, int velocity);
     static void noteOff(int pitch);
+    static void setPitchWheel(int value);
     static void sustainOn();
     static void sustainOff();
     static void setGain(float _gain);

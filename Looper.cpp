@@ -203,16 +203,25 @@ void Looper::clearChannel(int chNum, int varNum) {
         }
         else ++clipIt;
     }
-    if (clearAll) {
-        masterClip = nullptr;
-        clipIt = std::begin(clips);
-        while (clipIt != std::end(clips)) {
-            auto clip = *clipIt;
-            clip->purge();
-            clipIt = clips.erase(clipIt);
-            delete clip;
-        }
+    if (clearAll) this->clearAll();
+}
+void Looper::clearAll() {
+    masterClip = nullptr;
+    auto clipIt = std::begin(clips);
+    while (clipIt != std::end(clips)) {
+        auto clip = *clipIt;
+        clip->purge();
+        clipIt = clips.erase(clipIt);
+        delete clip;
     }
+}
+void Looper::undo() {
+    auto clip = clips.back();
+    if (!clip) return;
+    if (clip->isMaster()) masterClip = nullptr;
+    clip->purge();
+    clips.pop_back();
+    delete clip;
 }
 void Looper::storeWidgetAutomation(long pointer, float value) {
     if (recordingClip) {

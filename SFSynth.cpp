@@ -26,15 +26,18 @@ std::future<void> SFSynth::future;
 int SFSynth::currentPreset = 0;
 int SFSynth::currentBank = 0;
 
-static void nextInstrument() {
+void SFSynth::nextInstrument() {
     SFSynth::currentPreset++;
-    SFSynth::setPreset(0, ++SFSynth::currentPreset);
+    SFSynth::setPreset(0, ++(SFSynth::currentPreset));
 }
-static void prevInstrument() {
-    if (SFSynth::currentPreset > 0) SFSynth::setPreset(0, --SFSynth::currentPreset);
+void SFSynth::prevInstrument() {
+    if (SFSynth::currentPreset > 0) SFSynth::setPreset(0, --(SFSynth::currentPreset));
 }
-static tsf* tsfObj(long long ptr) {
+tsf* tsfObj(long long ptr) {
     return (tsf*)ptr;
+}
+void SFSynth::setPitchWheel(int value) {
+    tsf_channel_set_pitchwheel(tsfObj(tsfPtr), 0, value);
 }
 void SFSynth::init(unsigned int sampleRate, unsigned int _bufferSize) {
     isSustaining = false;
@@ -63,7 +66,7 @@ void SFSynth::setPreset(int bank, int preset) {
         else {
             tsfPreset = tsf_get_presetindex(tsfObj(tsfPtr), bank, preset);
         }
-        cout << "Instrument: " << tsf_bank_get_presetname(tsfObj(tsfPtr), bank, preset) << endl;
+        cout << "B" << bank << " P" << preset << " - " << tsf_bank_get_presetname(tsfObj(tsfPtr), bank, preset) << endl;
     }
 }
 void SFSynth::noteOn(int pitch, int velocity) {

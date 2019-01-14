@@ -22,6 +22,7 @@
 
 #define MIDI_ENABLED
 //#define MIDI_DEBUG
+//#define USING_ALSA
 
 using namespace std;
 
@@ -35,17 +36,25 @@ PitchDetector* pitchDetector;
 bool looperListening = false;
 bool vocoderEnabled = false;
 bool autotuneEnabled = false;
-float masterVolume = 1.0f;
+float masterVolume = 1.2f;
 float thereminVolume = 1.0f;
 float vocoderUpperThreshold = 20000;
 bool vocoderMixOriginal = false;
 bool sustainPedalAsLooper = false;
 bool lineIn = true;
-float sfSynthVolume = 1.5f;
+float sfSynthVolume = 3.0f;
 RtMidiOut *midiOut;
-double midiNumb = 0;
-double inputVolume = 0.25f;
+double midiNumb = 40;
+double inputVolume = 0.20f;
 float inputDryWet = 0;
+int transpose = 0;
+bool shiftHeld = false;
+bool recHeld = false;
+int instrPage = 0;
+
+void setLooperChannel(int chNum, int varNum);
+void hitEffectPad(int ch, int var);
+void clearChVar(int ch, int var);
 
 int convertMidiValue(int value, double deviation) {
     if (deviation < -100 || deviation > 100) {
@@ -63,52 +72,228 @@ int convertMidiValue(int value, double deviation) {
     int delta = (int)round((2 * (1 - t) * t * controlPointX) + (t * t * maxMidiValue));
     return (value - delta) + value;
 }
+void instrCtrl(int key, int pageSize) {
+    int pageOffset = instrPage * pageSize;
+    int bank = (pageOffset + key) / 128;
+    int preset = (pageOffset + key) % 128;
+    SFSynth::setPreset(bank, preset);
+}
 
 void midiCallback(double deltatime, vector<unsigned char> *message, void *userData)
 {
+    auto msg = new smf::MidiMessage(*message);
+
 #ifdef MIDI_DEBUG
-    unsigned long nBytes = message->size();
-    for (unsigned long i = 0; i < nBytes; i++) {
-        cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+    cout << "MSG ---\t" <<
+    "CH " << msg->getChannel() <<
+        (msg->isNoteOn() ? "\tNOTE ON " : "") <<
+        (msg->isNoteOff() ? "\tNOTE OFF " : "") <<
+        (msg->isController() ? "\tCC " : "") <<
+        (msg->isPitchbend() ? (" \tPB ") : "") <<
+        (msg->isMetaMessage() || msg->isMeta() ? "\tMETA " : "") <<
+        "\t# " << msg->getP1() <<
+        "\t## " << msg->getP2() <<
+        "\t### " << msg->isPitchbend();
+    if (msg->isPitchbend()) {
+        cout<< "\t#PB " << ((msg->getP2() - 64) * 128 + msg->getP1());
     }
-    if (nBytes > 0) {
-        cout << "stamp = " << deltatime << endl;
-    }
+    cout<<endl;
 #endif
-    if (message->at(0) == 176) {
+    if (msg->isPitchbend()) {
+        int value = ((msg->getP2() - 64) * 128 + msg->getP1()) + 8192;
+        SFSynth::setPitchWheel(value);
+    }
+    if (msg->isController()) {
         int id = message->at(1);
         int value = message->at(2);
-        if (id == 20) {
-            masterVolume = float(value) / 64;
+        if (id == 64) {
+            if (!sustainPedalAsLooper) {
+                if (message->at(2) > 0) {
+                    looper->faustSustain(true);
+                    SFSynth::sustainOn();
+                }
+                else {
+                    looper->faustSustain(false);
+                    SFSynth::sustainOff();
+                }
+            }
+            else {
+                if (message->at(2) == 127) {
+                    if (looper->isRecording()) {
+                        looper->stopRec();
+                        osc->sendClipSummary(looper->getClipSummary().dump());
+                    } else {
+                        looper->startRec();
+                    }
+                }
+            }
         }
-        if (id == 21) {
-//            vocoder->setBetaFactor(0.95f + ((float)value / 1280.0f));
-            sfSynthVolume = float(value) / 40;
+        else if (id == 117 && message->at(2) == 0) {
+            shiftHeld = false;
         }
-        if (id == 22) {
-            SFSynth::setPreset(0, value);
+        else if (id == 113 && message->at(2) == 0) {
+            recHeld = false;
         }
-        if (id == 23) {
-            midiNumb = (((double)value / 128) - 0.5) * 200;
-            cout << "New deviation: " << midiNumb << endl;
-        }
-        if (id == 24) {
-            inputVolume = float(value) / 127;
-        }
-        if (id == 25) {
-            inputDryWet = float(value) / 127;
+        else if (message->at(2) != 0) {
+            // Pad on
+            if (id == 113) {
+                if (!shiftHeld) {
+                    // Record
+                    recHeld = true;
+                    if (looper->isRecording()) {
+                        looper->stopRec();
+                        looperListening = false;
+                    }
+                    else {
+                        if (looperListening) {
+                            looperListening = false;
+                            looper->startRec();
+                        }
+                        else looperListening = true;
+                    }
+                    osc->sendClipSummary(looper->getClipSummary().dump());
+                }
+                else {
+                    looper->undo();
+                    osc->sendClipSummary(looper->getClipSummary().dump());
+                }
+            }
+            else if (id == 117) {
+                if (!recHeld) {
+                    shiftHeld = true;
+                }
+                else {
+                    looper->clearAll();
+                    osc->sendClipSummary(looper->getClipSummary().dump());
+                }
+            }
+            else if (id == 20) {
+                masterVolume = float(value) / 64;
+            }
+            else if (id == 21) {
+                sfSynthVolume = float(value) / 20;
+                // vocoder->setBetaFactor(0.95f + ((float)value / 1280.0f));
+            }
+            else if (id == 22) {
+                looper->FaustCC(id, value);
+                // SFSynth::setPreset(0, value);
+            }
+            else if (id == 23) {
+                midiNumb = (((double)value / 128) - 0.5) * 200;
+                cout << "New deviation: " << midiNumb << endl;
+            }
+            else if (id == 24) {
+                inputVolume = float(value) / 127;
+            }
+            else if (id == 25) {
+                inputDryWet = float(value) / 127;
+            }
+            else if (id == 26) {
+                looper->FaustCC(id, value);
+            }
+            else if (id == 27) {
+                looper->FaustCC(id, value);
+            }
+            else if (msg->getChannel() == 0) {
+                if (id == 110) {
+                    if (!shiftHeld) hitEffectPad(0, 1);
+                    else clearChVar(0, 1);
+                }
+                else if (id == 111) {
+                    if (!shiftHeld) hitEffectPad(1, 1);
+                    else clearChVar(1, 1);
+                }
+                else if (id == 112) {
+                    if (!shiftHeld) hitEffectPad(2, 1);
+                    else clearChVar(2, 1);
+                }
+                else if (id == 114) {
+                    if (!shiftHeld) hitEffectPad(0, 2);
+                    else clearChVar(0, 2);
+                }
+                else if (id == 115) {
+                    if (!shiftHeld) hitEffectPad(1, 2);
+                    else clearChVar(1, 2);
+                }
+                else if (id == 116) {
+                    if (!shiftHeld) hitEffectPad(2, 2);
+                    else clearChVar(2, 2);
+                }
+            }
+            else if (msg->getChannel() == 1) {
+                if (id == 110) {}
+                else if (id == 111) {}
+                else if (id == 112) {}
+                else if (id == 114) {}
+                else if (id == 115) {}
+                else if (id == 116) {}
+            }
         }
         else {
-            looper->FaustCC(id, value);
-//            cout << "Faust CC " << id << "=" << value << endl;
+            // Pad note off
         }
     }
-    else if (message->at(0) == 144) {
+    else if (msg->isNoteOn()) {
         int pitch = message->at(1);
         int velocity = message->at(2);
-        SFSynth::noteOn(pitch, convertMidiValue(velocity, midiNumb));
-        return;
-        midiOut->sendMessage(message);
+        if (shiftHeld) {
+            int absolutePitch = pitch % 12;
+            int instrOct =(pitch-24) / 12;
+            if (absolutePitch == 8) {
+                transpose = 0;
+                SFSynth::panic();
+            }
+            else if (absolutePitch == 6) {
+                transpose--;
+                SFSynth::panic();
+            }
+            else if (absolutePitch == 10) {
+                transpose++;
+                SFSynth::panic();
+            }
+            else if (absolutePitch == 1) {
+                if (instrPage > 0) instrPage--;
+            }
+            else if (absolutePitch == 3) {
+                instrPage++;
+            }
+            else if (pitch >= 24 && pitch <= 96) {
+                int octSize = 7;
+                int pageSize = 36;
+                if (absolutePitch == 0) {
+                    instrCtrl(instrOct*octSize, pageSize);
+                }
+                else if (absolutePitch == 2) {
+                    instrCtrl(instrOct*octSize+1, pageSize);
+                }
+                else if (absolutePitch == 4) {
+                    instrCtrl(instrOct*octSize+2, pageSize);
+                }
+                else if (absolutePitch == 5) {
+                    instrCtrl(instrOct*octSize+3, pageSize);
+                }
+                else if (absolutePitch == 7) {
+                    instrCtrl(instrOct*octSize+4, pageSize);
+                }
+                else if (absolutePitch == 9) {
+                    instrCtrl(instrOct*octSize+5, pageSize);
+                }
+                else if (absolutePitch == 11) {
+                    instrCtrl(instrOct*octSize+6, pageSize);
+                }
+            }
+        }
+        else {
+            // Actual note on
+            if (looperListening) {
+                looper->startRec();
+                looperListening = false;
+            }
+            SFSynth::noteOn(pitch + transpose, convertMidiValue(velocity, midiNumb));
+            looper->faustNoteOn(pitch + transpose, velocity);
+            return;
+        }
+//        midiOut->sendMessage(message);
 //        if (message->at(1) == 64) {
 //            // Sustain
 //
@@ -139,9 +324,10 @@ void midiCallback(double deltatime, vector<unsigned char> *message, void *userDa
 //        }
 
     }
-    else if (message->at(0) == 128) {
+    else if (msg->isNoteOff()) {
         int pitch = message->at(1);
-        SFSynth::noteOff(pitch);
+        SFSynth::noteOff(pitch + transpose);
+        looper->faustNoteOff(pitch + transpose);
         return;
         midiOut->sendMessage(message);
 //        if (message->at(2) == 0) {
@@ -244,6 +430,39 @@ int render(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     return 0;
 }
 
+void setLooperChannel(int chNum, int varNum) {
+    bool continuousRec = false;
+    if (looper->isRecording()) {
+        continuousRec = true;
+        looper->stopRec();
+    }
+
+    if (continuousRec
+        || looper->getChannelVariation(chNum) == varNum
+        || looper->isSlotEmpty(chNum, varNum)) {
+        looper->setActiveChannel(chNum);
+        looper->setActiveVariation(varNum);
+    }
+    looper->setChannelVariation(chNum, varNum);
+
+    if (continuousRec) {
+        looper->startRec();
+        osc->sendClipSummary(looper->getClipSummary().dump());
+    }
+    osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
+    osc->sendChannelSummary(looper->getChannelSummary().dump());
+}
+void clearChVar(int ch, int var) {
+    looper->clearChannel(ch, var);
+    osc->sendClipSummary(looper->getClipSummary().dump());
+}
+void hitEffectPad(int ch, int var) {
+    setLooperChannel(ch, var);
+//    looper->setAllVariations(var);
+    osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
+    osc->sendChannelSummary(looper->getChannelSummary().dump());
+}
+
 void oscCallback(tosc_message* msg) {
 
 //    tosc_printMessage(msg);
@@ -299,6 +518,20 @@ void oscCallback(tosc_message* msg) {
             // Send clip update to frontend
             osc->sendClipSummary(looper->getClipSummary().dump());
         }
+        if (state == 1) {
+            if (directRec == 1) {
+                looperListening = false;
+                looper->startRec();
+            }
+            else looperListening = true;
+        }
+        else {
+            looperListening = false;
+            looper->stopRec();
+
+            // Send clip update to frontend
+            osc->sendClipSummary(looper->getClipSummary().dump());
+        }
     }
     else if (address == "instrument") {
         int bank = tosc_getNextInt32(msg);
@@ -306,28 +539,9 @@ void oscCallback(tosc_message* msg) {
         SFSynth::setPreset(bank, instrument);
     }
     else if (address == "looperchannel") {
-        bool continuousRec = false;
-        if (looper->isRecording()) {
-            continuousRec = true;
-            looper->stopRec();
-        }
-
         int chNum = tosc_getNextInt32(msg);
         int varNum = tosc_getNextInt32(msg);
-        if (continuousRec
-                || looper->getChannelVariation(chNum) == varNum
-                || looper->isSlotEmpty(chNum, varNum)) {
-            looper->setActiveChannel(chNum);
-            looper->setActiveVariation(varNum);
-        }
-        looper->setChannelVariation(chNum, varNum);
-
-        if (continuousRec) {
-            looper->startRec();
-            osc->sendClipSummary(looper->getClipSummary().dump());
-        }
-        osc->sendActive(looper->getActiveChannel(), looper->getActiveVariation());
-        osc->sendChannelSummary(looper->getChannelSummary().dump());
+        setLooperChannel(chNum, varNum);
     }
     else if (address == "loopergroupvariation") {
         int varNum = tosc_getNextInt32(msg);
@@ -338,8 +552,7 @@ void oscCallback(tosc_message* msg) {
     else if (address == "clearchannel") {
         int chNum = tosc_getNextInt32(msg);
         int varNum = tosc_getNextInt32(msg);
-        looper->clearChannel(chNum, varNum);
-        osc->sendClipSummary(looper->getClipSummary().dump());
+        clearChVar(chNum, varNum);
     }
     else if (address == "solochannel") {
         int chNum = tosc_getNextInt32(msg);
@@ -459,7 +672,13 @@ int main() {
     vocoder = new Vocoder();
     pitchDetector = new PitchDetector(sampleRate, 2048);
     fileManager = new FileManager();
+
+#ifdef USING_ALSA
+    audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::LINUX_ALSA);
+#endif
+#ifndef USING_ALSA
     audioEngine = new AudioEngine(sampleRate, bufferFrames, &render, RtAudio::UNIX_JACK);
+#endif
 
 #ifdef MIDI_ENABLED
     // Initialize MIDI listener
@@ -476,7 +695,12 @@ int main() {
     }
     else {
         cout << nPortsIn << " input MIDI port(s) available\n";
-        midiIn->openPort(nPortsIn - 2);
+#ifdef USING_ALSA
+        midiIn->openPort(1);
+#endif
+#ifndef USING_ALSA
+        midiIn->openPort(0);
+#endif
         midiIn->setCallback(&midiCallback);
 
         // Ignore sysex, timing, or active sensing messages:
@@ -497,6 +721,8 @@ int main() {
 //        midiOut->openPort(1);
     }
 #endif
+
+    setLooperChannel(0, 1);
 
     // Update front-end on boot
     osc->sendJson(looper->getWidgetJSON().c_str());
